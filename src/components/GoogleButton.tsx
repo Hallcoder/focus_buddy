@@ -1,17 +1,44 @@
-import React from 'react';
-import google from "../assets/google.jpeg";
-const ContinueWithGoogleButton = () => {
+import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
+import CryptoJS from "crypto-js";
+import { useNavigate } from "react-router-dom";
+
+// Your encryption key
+const secretKey = 'your-secret-key'; 
+
+const encryptToken = (token:string) => {
+  return CryptoJS.AES.encrypt(token, secretKey).toString();
+};
+
+
+const GoogleLoginButton = () => {
+  const navigate = useNavigate();
+  const handleGoogleLoginSuccess = async (credentialResponse:CredentialResponse) => {
+    try {
+      const token = credentialResponse.credential; // Extract token from the response
+      const encryptedToken = encryptToken(token!); // Encrypt the token
+  
+      // Store the token securely
+      chrome.storage.local.set({ authToken: encryptedToken }, () => {
+        console.log('Google token is saved.');
+      });
+  
+      console.log("User logged in successfully with Google.");
+      navigate("/home"); // Navigate to the home page
+    } catch (error:any) {
+      console.error("Error handling Google login:", error.message);
+    }
+  };
+  
+  const handleGoogleLoginError = () => {
+    console.log("Login Failed");
+  };
+  
   return (
-    <div className="w-8/12 flex items-center justify-center p-3 border border-primary rounded-lg shadow-sm hover:bg-gray-100 cursor-pointer">
-      {/* Replace the src with the path to your Google icon */}
-      <img 
-        src={google} 
-        alt="Google Icon" 
-        className="w-6 h-6 mr-2" 
-      />
-      <span className="text-primary font-medium">Continue with Google</span>
-    </div>
+    <GoogleLogin
+      onSuccess={handleGoogleLoginSuccess}
+      onError={handleGoogleLoginError}
+    />
   );
 };
 
-export default ContinueWithGoogleButton;
+export default GoogleLoginButton;

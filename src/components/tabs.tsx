@@ -6,7 +6,7 @@ const Tabs = ({ children }: { children: any }) => {
   const navigate  = useNavigate();
 
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [addUrl,setAddUrl] = useState<string>();
+  const [addUrl,setAddUrl] = useState<string>("add-blacklisted-urls");
   const handleTabClick = (index: any,child:any) => {
     setActiveTab(index);
     console.log(`add-${child.props.label.toLowerCase().split(" ").join("-")}`)

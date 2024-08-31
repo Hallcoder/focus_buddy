@@ -4,10 +4,10 @@ import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import CustomInput from "../components/input"; // Assuming CustomInput is in the right path
 
-function AddChosenBuddies() {
+function AddBlackListedUrls() {
   const navigate = useNavigate();
 
-  const handleAddBuddy = (values: { buddyEmail: string }, { resetForm }: any) => {
+  const handleAddUrl = (values: { buddyEmail: string }, { resetForm }: any) => {
     console.log("Buddy Email:", values.buddyEmail);
 
     // Here you would add the logic to store the buddy email in a list
@@ -29,26 +29,26 @@ function AddChosenBuddies() {
       >
         ← Back
       </button>
-      <h2 className="font-semibold text-2xl mb-4">Add a Buddy ✌️</h2>
+      <h2 className="font-semibold text-2xl mb-4">Add a new url 🌐</h2>
       <Formik
         initialValues={{ buddyEmail: "" }}
         validationSchema={validationSchema}
-        onSubmit={handleAddBuddy}
+        onSubmit={handleAddUrl}
       >
         {({ isSubmitting }) => (
           <Form className="w-full max-w-md">
             <CustomInput
-              name="buddyEmail"
-              label="Buddy ✌️"
-              type="email"
-              placeholder="Enter buddy's email"
+              name="url"
+              label="New url 🌐"
+              type="text"
+              placeholder="Enter new url..."
             />
             <button
               type="submit"
               className="p-2 mt-4 w-full rounded-md text-white bg-primary hover:bg-primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Adding..." : "Add Buddy"}
+              {isSubmitting ? "Adding..." : "Add Url"}
             </button>
           </Form>
         )}
@@ -57,4 +57,4 @@ function AddChosenBuddies() {
   );
 }
 
-export default AddChosenBuddies;
+export default AddBlackListedUrls;

@@ -7,6 +7,8 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import TestPage from "../pages/login";
 import Signup from "../pages/signup";
 import Home from "../pages/home";
+import AddChosenBuddies from "../pages/add-chosen-buddies";
+import AddBlackListedUrls from "../pages/add-blacklisted-urls";
 
 console.log("ID",process.env.REACT_APP_GOOGLE_CLIENT_ID);
 const root = ReactDOM.createRoot(
@@ -21,6 +23,8 @@ root.render(
           <Route path="/home" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<TestPage />} />
+          <Route path="/add-chosen-buddies" element={<AddChosenBuddies />}/>
+          <Route path="/add-blacklisted-urls" element={<AddBlackListedUrls />}/>
           {/* Add more routes here as needed */}
         </Routes>
       </HashRouter>

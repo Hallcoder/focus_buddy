@@ -1,48 +1,61 @@
 import ContinueWithGoogleButton from "../components/GoogleButton";
 import logo from "../assets/logo.png";
 import CustomInput from "../components/input";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { Formik, Form, ErrorMessage } from "formik";
+import * as Yup from "yup";
+
+const firebaseErrors: { [key: string]: string } = {
+  "auth/email-already-in-use": "This email is already in use.",
+  "auth/invalid-email": "The email address is not valid.",
+  "auth/weak-password": "The password is too weak. Please use at least 6 characters.",
+  "auth/user-not-found": "No user found with this email.",
+  "auth/wrong-password": "Incorrect password. Please try again.",
+  "auth/too-many-requests": "Too many requests. Please try again later.",
+  "auth/network-request-failed": "Network error. Please check your connection.",
+};
+
 function Signup() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+
+  const initialValues = {
     username: "",
     email: "",
     password: "",
-  });
-  const [error,setError] = useState();
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
   };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+
+  const validationSchema = Yup.object({
+    username: Yup.string().required("Username is required"),
+    email: Yup.string().email("Invalid email address").required("Email is required"),
+    password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
+  });
+
+  const handleSubmit = async (values: any, { setSubmitting, setStatus }: any) => {
     try {
-      // Create a new user with email and password
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        formData.email,
-        formData.password
+        values.email,
+        values.password
       );
 
-      // Update the user's profile with the username
       await updateProfile(userCredential.user, {
-        displayName: formData.username,
+        displayName: values.username,
       });
-
-      // Optionally handle other tasks like redirecting the user or showing a success message
+      await sendEmailVerification(userCredential.user);
       console.log("User signed up successfully:", userCredential.user);
+      navigate("/login");
     } catch (error: any) {
-      setError(error.message);
+      const errorMessage = firebaseErrors[error.code as keyof typeof firebaseErrors] || 'An unexpected error occurred. Please try again.';
+      setStatus(errorMessage);
       console.error("Error signing up:", error.message);
+    } finally {
+      setSubmitting(false);
     }
   };
+
   return (
     <div className="flex flex-col justify-center items-center border-4 border-red-400">
       <img src={logo} alt="logo" className="h-[10vh] m-2 w-45" />
@@ -56,37 +69,59 @@ function Signup() {
           console.log("Login Failed");
         }}
       />
-      ;<p className="font-semibold m-2">OR</p>
-      {error && <div className="text-red-400 font-serif">Error occurred</div>}
-      <form className="w-8/12">
-        <CustomInput
-          name="username"
-          label="Username"
-          type="text"
-          placeholder="username..."
-          value={formData.username}
-          onChange={handleInputChange}
-        />
-        <CustomInput
-          name="email"
-          label="Email"
-          placeholder="Email..."
-          type="email"
-          value={formData.email}
-          onChange={handleInputChange}
-        />
-        <CustomInput
-          name="password"
-          label="Password"
-          type="password"
-          placeholder="password..."
-          value={formData.password}
-          onChange={handleInputChange}
-        />
-        <button onClick={handleSubmit} className="p-3 w-full rounded-md my-3 text-white bg-primary">
-          Register
-        </button>
-      </form>
+      <p className="font-semibold m-2">OR</p>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ values, handleChange, handleBlur, isSubmitting, status }) => (
+          <Form className="w-8/12">
+            <CustomInput
+              name="username"
+              label="Username"
+              type="text"
+              placeholder="Username..."
+              value={values.username}
+              onChange={handleChange}
+            />
+            <ErrorMessage name="username" component="div" className="text-red-500 text-xs" />
+
+            <CustomInput
+              name="email"
+              label="Email"
+              type="email"
+              placeholder="Email..."
+              value={values.email}
+              onChange={handleChange}
+            />
+            <ErrorMessage name="email" component="div" className="text-red-500 text-xs" />
+
+            <CustomInput
+              name="password"
+              label="Password"
+              type="password"
+              placeholder="Password..."
+              value={values.password}
+              onChange={handleChange}
+            />
+            <ErrorMessage name="password" component="div" className="text-red-500 text-xs" />
+
+            {/* Display general error message */}
+            {status && (
+              <div className="text-red-500 font-serif">{status}</div>
+            )}
+
+            <button
+              type="submit"
+              className="p-3 w-full rounded-md my-3 text-white bg-primary"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Registering..." : "Register"}
+            </button>
+          </Form>
+        )}
+      </Formik>
       <p className="m-2">
         Already have an account?{" "}
         <Link to="/login" className="font-semibold text-primary underline">

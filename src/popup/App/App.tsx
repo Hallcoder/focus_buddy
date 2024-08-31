@@ -5,7 +5,7 @@ import './App.css';
 function App() {
   return (
     <div className="">
-      <header className="border-4 border-red-400">
+      <header className="">
         <img src={logo} className="App-logo" alt="logo" />
         <p className='text-yellow-100'>
           Edit <code>src/App.tsx</code> and save to reload.
@@ -18,7 +18,7 @@ function App() {
         >
           Learn React
         </a>
-        <Link to={"/test"}>Go to test page</Link>
+        <Link to={"/login"}>Go to login</Link>
       </header>
     </div>
   );
