@@ -3,22 +3,64 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import CustomInput from "../components/input"; // Assuming CustomInput is in the right path
+import { auth, db } from "../config/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import toast from "react-hot-toast";
+import { fetchUserByEmail } from "../utils/firebaseFunctions";
 
 function AddChosenBuddies() {
   const navigate = useNavigate();
 
-  const handleAddBuddy = (values: { buddyEmail: string }, { resetForm }: any) => {
-    console.log("Buddy Email:", values.buddyEmail);
+  const handleAddBuddy = async (
+    values: { buddyEmail: string },
+    { resetForm }: any
+  ) => {
+    const buddyEmail = values.buddyEmail.trim();
+    const user = auth.currentUser;
 
-    // Here you would add the logic to store the buddy email in a list
-    // chosenBuddiesList.push(values.buddyEmail);
+    if (!user) {
+      toast.error("No authenticated user found.");
+      navigate("/login");
+    }
 
-    // Reset form after submission
-    resetForm();
+    try {
+      // Get the user's document reference
+      const userDocRef = doc(db, "users", user!.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const currentBuddies = userData.moderators || [];
+        const buddyData  = await fetchUserByEmail(buddyEmail);
+        console.log("Buddydata", buddyData);
+        if(!buddyData){
+          throw new Error("User with that email does not exist!");
+        }
+        // Add the new buddy email if it's not already in the list
+        if (!currentBuddies.includes(buddyEmail)) {
+          const updatedBuddies = [...currentBuddies, buddyEmail];
+          await updateDoc(userDocRef, { moderators: updatedBuddies });
+
+          toast.success("Buddy added successfully!");
+          resetForm();
+        } else if(buddyEmail == userData.email){
+           throw new Error("You can't be your own Buddy, that's cheating😂!")
+        }
+        else {
+          throw new Error("This buddy is already in your list.");
+        }
+      } else {
+        throw new Error("User document not found.");
+      }
+    } catch (error: any) {
+      toast.error(`Error adding buddy: ${error.message}`);
+    }
   };
 
   const validationSchema = Yup.object({
-    buddyEmail: Yup.string().email("Invalid email address").required("Email is required"),
+    buddyEmail: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
   });
 
   return (
@@ -35,12 +77,13 @@ function AddChosenBuddies() {
         validationSchema={validationSchema}
         onSubmit={handleAddBuddy}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting,handleChange }) => (
           <Form className="w-full max-w-md">
             <CustomInput
               name="buddyEmail"
               label="Buddy ✌️"
               type="email"
+              onChange={handleChange}
               placeholder="Enter buddy's email"
             />
             <button

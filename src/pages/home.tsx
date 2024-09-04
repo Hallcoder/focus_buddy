@@ -1,95 +1,123 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/navbar";
 import Tab from "../components/tab";
 import Tabs from "../components/tabs";
 import ListingComponent from "../components/ListingComponent";
 import FloatingActionButton from "../components/floatingActionButton";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "../config/firebase";
+import { doc, getDoc, getDocs, collection } from "firebase/firestore";
+import { extractURLComponents } from "../utils/commonFunctions";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+import { FaRegSadTear } from 'react-icons/fa';
+import { fetchBuddiesByEmail } from "../utils/firebaseFunctions";
 
 function Home() {
-  const [blackListedUrls, setBlackListedUrls] = useState([
-    {
-      id: "unique-id",
-      url: "https://example.com",
-      domain: "example.com",
-      createdAt: "2024-08-13T12:34:56Z",
-      updatedAt: "2024-08-13T12:34:56Z",
-      active: true,
-      notes: "Avoid visiting this site during work hours.",
-    },
-    {
-      id: "unique-id",
-      url: "https://example.com",
-      domain: "example.com",
-      createdAt: "2024-08-13T12:34:56Z",
-      updatedAt: "2024-08-13T12:34:56Z",
-      active: true,
-      notes: "Avoid visiting this site during work hours.",
-    },
-  ]);
-  const [chosenBuddies, setChosenBuddies] = useState([
-    {
-      id: "unique-buddy-id",
-      userId: "unique-user-id",
-      buddyId: "unique-buddy-id",
-      buddyName: "John Doe",
-      buddyEmail: "john.doe@example.com",
-      addedAt: "2024-08-13T14:00:00Z",
-      status: "active",
-      permissions: {
-        viewBlacklist: true,
-        receiveAlerts: true,
-        editBlacklist: false,
-      },
-      notificationSettings: {
-        email: true,
-        sms: false,
-        frequency: "immediate",
-      },
-      relationshipNotes:
-        "John is my best friend, and he agreed to help me stay focused.",
-    },
-    {
-      id: "unique-buddy-id",
-      userId: "unique-user-id",
-      buddyId: "unique-buddy-id",
-      buddyName: "John Doe",
-      buddyEmail: "john.doe@example.com",
-      addedAt: "2024-08-13T14:00:00Z",
-      status: "active",
-      permissions: {
-        viewBlacklist: true,
-        receiveAlerts: true,
-        editBlacklist: false,
-      },
-      notificationSettings: {
-        email: true,
-        sms: false,
-        frequency: "immediate",
-      },
-      relationshipNotes:
-        "John is my best friend, and he agreed to help me stay focused.",
-    },
-  ]);
- 
+  const [blockedurls, setBlockedUrls] = useState<string[]>([]);
+  const [chosenBuddies, setChosenBuddies] = useState<any[]>([]);
+  const [loadingUrls, setLoadingUrls] = useState(true);
+  const [loadingBuddies, setLoadingBuddies] = useState(true);
+
+  useEffect(() => {
+    const fetchBlockedUrls = async () => {
+      const user = auth.currentUser;
+
+      if (!user) {
+        console.error("No authenticated user found.");
+        return;
+      }
+
+      const docRef = doc(db, "users", user.uid);
+      try {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setBlockedUrls(data.blocked_urls || []);
+        } else {
+          console.log("No such document!");
+        }
+      } catch (error: any) {
+        console.error("Error fetching blocked URLs:", error.message);
+      } finally {
+        setLoadingUrls(false);
+      }
+    };
+
+    fetchBlockedUrls();
+  }, []);
+
+  useEffect(() => {
+    const fetchChosenBuddies = async () => {
+      const user = auth.currentUser;
+
+      if (!user) {
+        console.error("No authenticated user found.");
+        return;
+      }
+
+      const docRef = doc(db, "users", user.uid);
+      try {
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const moderators = data.moderators || [];
+
+          // Fetch buddies by email
+          const buddies = await fetchBuddiesByEmail(moderators);
+          setChosenBuddies(buddies);
+        } else {
+          console.log("No such document!");
+        }
+      } catch (error: any) {
+        console.error("Error fetching chosen buddies:", error.message);
+      } finally {
+        setLoadingBuddies(false);
+      }
+    };
+
+    fetchChosenBuddies();
+  }, []);
+
   return (
     <div className="flex flex-col border-4 h-full">
       <Navbar />
       <Tabs>
         <Tab label="Blacklisted URLs">
-          {blackListedUrls.map((url) => {
-            return <ListingComponent title={url.domain} subTitle={url.url} />;
-          })}
+          {loadingUrls ? (
+            <Skeleton count={5} height={40} />
+          ) : blockedurls.length > 0 ? (
+            blockedurls.map((url) => (
+              <ListingComponent
+                key={url}
+                title={extractURLComponents(url)?.domain || url}
+                subTitle={url}
+              />
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center p-6">
+              <FaRegSadTear size={48} color="#999" />
+              <p className="mt-4 text-gray-500">No URLs registered yet.</p>
+            </div>
+          )}
         </Tab>
         <Tab label="Chosen Buddies">
-          {chosenBuddies.map((buddy) => {
-            return (
+          {loadingBuddies ? (
+            <Skeleton count={5} height={60} />
+          ) : chosenBuddies.length > 0 ? (
+            chosenBuddies.map((buddy: any) => (
               <ListingComponent
-                title={buddy.buddyName}
-                subTitle={buddy.buddyEmail}
+                key={buddy.id}
+                title={buddy.name}
+                subTitle={buddy.email}
               />
-            );
-          })}
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center p-6">
+              <FaRegSadTear size={48} color="#999" />
+              <p className="mt-4 text-gray-500">No buddies registered yet.</p>
+            </div>
+          )}
         </Tab>
       </Tabs>
     </div>

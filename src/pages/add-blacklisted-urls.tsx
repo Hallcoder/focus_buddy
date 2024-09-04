@@ -3,22 +3,34 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import CustomInput from "../components/input"; // Assuming CustomInput is in the right path
+import { addBlockedUrl } from "../utils/firebaseFunctions"; // Import the function to add URL to Firebase
 
 function AddBlackListedUrls() {
   const navigate = useNavigate();
 
-  const handleAddUrl = (values: { buddyEmail: string }, { resetForm }: any) => {
-    console.log("Buddy Email:", values.buddyEmail);
+  const handleAddUrl = async (
+    values: { newUrl: string },
+    { resetForm, setSubmitting, setStatus }: any
+  ) => {
+    console.log("Add URL function triggered with values:", values); // Log form values
 
-    // Here you would add the logic to store the buddy email in a list
-    // chosenBuddiesList.push(values.buddyEmail);
+    try {
+      await addBlockedUrl(values.newUrl);
+      console.log("New URL added successfully:", values.newUrl);
 
-    // Reset form after submission
-    resetForm();
+      resetForm();
+      setStatus({ success: "URL added successfully!" });
+    } catch (error:any) {
+      console.error("Error adding URL:", error.message);
+      setStatus({ error: error.message });
+    } finally {
+      setSubmitting(false);
+      console.log("Form submission complete");
+    }
   };
 
   const validationSchema = Yup.object({
-    buddyEmail: Yup.string().email("Invalid email address").required("Email is required"),
+    newUrl: Yup.string().url("Invalid URL format").required("URL is required"),
   });
 
   return (
@@ -29,26 +41,35 @@ function AddBlackListedUrls() {
       >
         ← Back
       </button>
-      <h2 className="font-semibold text-2xl mb-4">Add a new url 🌐</h2>
+      <h2 className="font-semibold text-2xl mb-4">Add a new URL 🌐</h2>
       <Formik
-        initialValues={{ buddyEmail: "" }}
+        initialValues={{ newUrl: "" }}
         validationSchema={validationSchema}
         onSubmit={handleAddUrl}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting, handleChange, status }) => (
           <Form className="w-full max-w-md">
             <CustomInput
-              name="url"
-              label="New url 🌐"
+              name="newUrl"
+              label="New URL 🌐"
               type="text"
-              placeholder="Enter new url..."
+              placeholder="Enter new URL..."
+              onChange={handleChange}
             />
+            {status?.error && (
+              <div className="text-red-500 text-sm mt-2">{status.error}</div>
+            )}
+            {status?.success && (
+              <div className="text-green-500 text-sm mt-2">
+                {status.success}
+              </div>
+            )}
             <button
               type="submit"
               className="p-2 mt-4 w-full rounded-md text-white bg-primary hover:bg-primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Adding..." : "Add Url"}
+              {isSubmitting ? "Adding..." : "Add URL"}
             </button>
           </Form>
         )}

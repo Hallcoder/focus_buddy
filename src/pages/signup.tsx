@@ -4,9 +4,10 @@ import CustomInput from "../components/input";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
-import { auth } from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { doc, setDoc } from "firebase/firestore";
 
 const firebaseErrors: { [key: string]: string } = {
   "auth/email-already-in-use": "This email is already in use.",
@@ -44,6 +45,15 @@ function Signup() {
       await updateProfile(userCredential.user, {
         displayName: values.username,
       });
+
+      await setDoc(doc(db,"users", userCredential.user.uid), {
+        email: userCredential.user.email,
+        blocked_urls: [],
+        moderating: [],
+        moderators: [],
+        name:values.username
+      });
+
       await sendEmailVerification(userCredential.user);
       console.log("User signed up successfully:", userCredential.user);
       navigate("/login");
