@@ -77,7 +77,7 @@ function Login() {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center border-4 border-red-400">
+    <div className="flex flex-col justify-center items-center">
       <img src={logo} alt="logo" className="h-[10vh] m-2 w-45" />
       <h1 className="font-semibold m-2 p-2 text-3xl">Login</h1>
       <GoogleLogin

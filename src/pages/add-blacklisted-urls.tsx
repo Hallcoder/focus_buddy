@@ -91,7 +91,7 @@ function AddOrUpdateUrl() {
             {/* Show error message below the input field if URL is invalid */}
             {errors.newUrl && touched.newUrl && (
               <div className="text-red-500 text-sm mt-2">
-                {errors.newUrl}
+                {errors.newUrl as any}
               </div>
             )}
 

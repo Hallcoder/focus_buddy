@@ -84,7 +84,7 @@ function Home() {
     });
   };
   return (
-    <div className="flex flex-col border-4 h-full">
+    <div className="flex flex-col h-full">
       <Navbar />
       <Tabs>
         <Tab label="Blacklisted URLs">
