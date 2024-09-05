@@ -10,7 +10,7 @@ import { doc, getDoc, getDocs, collection } from "firebase/firestore";
 import { extractURLComponents } from "../utils/commonFunctions";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaRegSadTear } from 'react-icons/fa';
+import { FaRegSadTear } from "react-icons/fa";
 import { fetchBuddiesByEmail } from "../utils/firebaseFunctions";
 
 function Home() {
@@ -18,7 +18,7 @@ function Home() {
   const [chosenBuddies, setChosenBuddies] = useState<any[]>([]);
   const [loadingUrls, setLoadingUrls] = useState(true);
   const [loadingBuddies, setLoadingBuddies] = useState(true);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchBlockedUrls = async () => {
       const user = auth.currentUser;
@@ -78,7 +78,11 @@ function Home() {
 
     fetchChosenBuddies();
   }, []);
-
+  const handleEditUrl = (existingUrl: string) => {
+    navigate("/add-blacklisted-urls", {
+      state: { existingUrl }, // Pass the existing URL via state
+    });
+  };
   return (
     <div className="flex flex-col border-4 h-full">
       <Navbar />
@@ -90,8 +94,11 @@ function Home() {
             blockedurls.map((url) => (
               <ListingComponent
                 key={url}
+                type="url"
                 title={extractURLComponents(url)?.domain || url}
                 subTitle={url}
+                onEdit={() => handleEditUrl(url)}
+                onRemove={() => console.log("Remove action triggered!")}
               />
             ))
           ) : (
@@ -109,7 +116,14 @@ function Home() {
               <ListingComponent
                 key={buddy.id}
                 title={buddy.name}
+                type="buddy"
                 subTitle={buddy.email}
+                onEdit={() => console.log("Edit action triggered!")}
+                onRemove={() => console.log("Remove action triggered!")}
+                onViewDetails={() => console.log("View Buddy Details")}
+                onSendNotification={() =>
+                  console.log("Send Notification to Buddy")
+                }
               />
             ))
           ) : (

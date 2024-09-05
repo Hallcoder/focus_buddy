@@ -31,9 +31,9 @@ function AddChosenBuddies() {
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const currentBuddies = userData.moderators || [];
-        const buddyData  = await fetchUserByEmail(buddyEmail);
+        const buddyData = await fetchUserByEmail(buddyEmail);
         console.log("Buddydata", buddyData);
-        if(!buddyData){
+        if (!buddyData) {
           throw new Error("User with that email does not exist!");
         }
         // Add the new buddy email if it's not already in the list
@@ -41,12 +41,13 @@ function AddChosenBuddies() {
           const updatedBuddies = [...currentBuddies, buddyEmail];
           await updateDoc(userDocRef, { moderators: updatedBuddies });
 
+          if (buddyEmail == userData.email) {
+            throw new Error("You can't be your own Buddy, that's cheating😂!");
+          }
+          
           toast.success("Buddy added successfully!");
           resetForm();
-        } else if(buddyEmail == userData.email){
-           throw new Error("You can't be your own Buddy, that's cheating😂!")
-        }
-        else {
+        } else {
           throw new Error("This buddy is already in your list.");
         }
       } else {
@@ -77,7 +78,7 @@ function AddChosenBuddies() {
         validationSchema={validationSchema}
         onSubmit={handleAddBuddy}
       >
-        {({ isSubmitting,handleChange }) => (
+        {({ isSubmitting, handleChange }) => (
           <Form className="w-full max-w-md">
             <CustomInput
               name="buddyEmail"

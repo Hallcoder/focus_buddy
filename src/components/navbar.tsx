@@ -6,15 +6,16 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import logo from "../assets/logo.png";
 import profile from "../assets/profile.jpeg";
+import useAuth from "../hooks/useAuth";
 
 function Navbar() {
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const navigate = useNavigate();
+  const {currentUser:user} = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const user = auth.currentUser;
 
       if (!user) {
         toast.error("No authenticated user found.");
@@ -30,7 +31,8 @@ function Navbar() {
         const userDocSnap = await getDoc(userDocRef);
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
-          setUserName(userData.displayName || "Unknown User");
+          console.log(userData)
+          setUserName(userData.name || "Unknown User");
         } else {
           console.log("No such document!");
           setUserName("Unknown User");

@@ -6,6 +6,7 @@ interface InputProps {
   name?: string;
   placeholder?: string;
   value?: string;
+  required?:boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
 }
@@ -17,6 +18,7 @@ const Input: React.FC<InputProps> = ({
   placeholder,
   value,
   onChange,
+  required = false,
   className = '',
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +36,7 @@ const Input: React.FC<InputProps> = ({
           name={name}
           placeholder={placeholder}
           value={value}
+          required
           onChange={onChange}
           className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 w-full pr-10"
         />

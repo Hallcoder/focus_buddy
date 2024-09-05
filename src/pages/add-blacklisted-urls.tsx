@@ -1,75 +1,112 @@
 import React from "react";
-import { Formik, Form } from "formik";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
-import CustomInput from "../components/input"; // Assuming CustomInput is in the right path
-import { addBlockedUrl } from "../utils/firebaseFunctions"; // Import the function to add URL to Firebase
+import { useLocation, useNavigate } from "react-router-dom";
+import CustomInput from "../components/input";
+import { addBlockedUrl, updateBlockedUrl } from "../utils/firebaseFunctions";
+import toast from "react-hot-toast";
 
-function AddBlackListedUrls() {
+function AddOrUpdateUrl() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const existingUrl = typeof location.state?.existingUrl === "string" ? location.state.existingUrl : "";
 
-  const handleAddUrl = async (
+  console.log("Existing URL:", existingUrl);
+
+  const handleFormSubmit = async (
     values: { newUrl: string },
     { resetForm, setSubmitting, setStatus }: any
   ) => {
-    console.log("Add URL function triggered with values:", values); // Log form values
-
     try {
-      await addBlockedUrl(values.newUrl);
-      console.log("New URL added successfully:", values.newUrl);
+      if (!values.newUrl || typeof values.newUrl !== "string") {
+        throw new Error("Invalid URL format or empty URL.");
+      }
+
+      if (existingUrl) {
+        // Update the existing URL
+        await updateBlockedUrl(existingUrl, values.newUrl);
+        toast.success("URL updated successfully!");
+      } else {
+        // Add a new URL
+        await addBlockedUrl(values.newUrl);
+        toast.success("URL added successfully!");
+      }
 
       resetForm();
-      setStatus({ success: "URL added successfully!" });
-    } catch (error:any) {
-      console.error("Error adding URL:", error.message);
-      setStatus({ error: error.message });
+      navigate(-1);
+    } catch (error: any) {
+      const errorMessage = error.message || "An error occurred, please try again.";
+      toast.error(errorMessage);
+      setStatus({ error: errorMessage });
     } finally {
       setSubmitting(false);
-      console.log("Form submission complete");
     }
   };
 
-  const validationSchema = Yup.object({
-    newUrl: Yup.string().url("Invalid URL format").required("URL is required"),
+  // Enhanced validation schema
+  const validationSchema = Yup.object().shape({
+    newUrl: Yup.string()
+      .url("Invalid URL format. Please ensure it includes 'http://' or 'https://'.")
+      .required("URL is required"),
   });
 
   return (
     <div className="flex flex-col justify-center items-center p-4">
       <button
-        onClick={() => navigate(-1)} // Navigate to the previous page
+        onClick={() => {
+          try {
+            navigate(-1);
+          } catch (err: any) {
+            console.error("Navigation error:", err.message);
+            toast.error("Failed to navigate back.");
+          }
+        }}
         className="self-start mb-4 text-primary hover:text-primary"
       >
         ← Back
       </button>
-      <h2 className="font-semibold text-2xl mb-4">Add a new URL 🌐</h2>
+
+      <h2 className="font-semibold text-2xl mb-4">
+        {existingUrl ? "Update URL 🌐" : "Add a new URL 🌐"}
+      </h2>
+
       <Formik
-        initialValues={{ newUrl: "" }}
+        initialValues={{ newUrl: existingUrl }}
+        enableReinitialize={true}
         validationSchema={validationSchema}
-        onSubmit={handleAddUrl}
+        onSubmit={handleFormSubmit}
       >
-        {({ isSubmitting, handleChange, status }) => (
+        {({ isSubmitting, handleChange, values, errors, touched }) => (
           <Form className="w-full max-w-md">
             <CustomInput
               name="newUrl"
               label="New URL 🌐"
               type="text"
-              placeholder="Enter new URL..."
+              placeholder="Enter URL..."
               onChange={handleChange}
+              value={values.newUrl}
+              required
             />
-            {status?.error && (
-              <div className="text-red-500 text-sm mt-2">{status.error}</div>
-            )}
-            {status?.success && (
-              <div className="text-green-500 text-sm mt-2">
-                {status.success}
+
+            {/* Show error message below the input field if URL is invalid */}
+            {errors.newUrl && touched.newUrl && (
+              <div className="text-red-500 text-sm mt-2">
+                {errors.newUrl}
               </div>
             )}
+
             <button
               type="submit"
-              className="p-2 mt-4 w-full rounded-md text-white bg-primary hover:bg-primary"
-              disabled={isSubmitting}
+              className={`p-2 mt-4 w-full rounded-md text-white bg-primary hover:bg-primary ${isSubmitting || errors.newUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isSubmitting || !!errors.newUrl} // Disable submit if errors exist
             >
-              {isSubmitting ? "Adding..." : "Add URL"}
+              {isSubmitting
+                ? existingUrl
+                  ? "Updating..."
+                  : "Adding..."
+                : existingUrl
+                ? "Update URL"
+                : "Add URL"}
             </button>
           </Form>
         )}
@@ -78,4 +115,4 @@ function AddBlackListedUrls() {
   );
 }
 
-export default AddBlackListedUrls;
+export default AddOrUpdateUrl;

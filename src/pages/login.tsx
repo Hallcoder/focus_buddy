@@ -95,7 +95,7 @@ function Login() {
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, handleChange, handleBlur, isSubmitting, status }) => (
+        {({ values, handleChange, isSubmitting, status }) => (
           <Form className="w-8/12">
             <CustomInput
               name="email"
