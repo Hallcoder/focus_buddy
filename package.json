@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@nestjs/config": "^3.2.3",
     "@react-oauth/google": "^0.12.1",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
@@ -15,6 +16,7 @@
     "crypto-js": "^4.2.0",
     "firebase": "^10.13.0",
     "formik": "^2.4.6",
+    "nodemailer": "^6.9.15",
     "postcss": "^8.4.41",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -31,7 +33,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-app-rewired build",
+    "build": "cls && react-app-rewired build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

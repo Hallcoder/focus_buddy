@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "My Extension",
+  "name": "FocusBuddy Extension",
   "version": "1.0.0",
   "description": "A simple Chrome extension with React.",
   "icons": {
@@ -20,8 +20,6 @@
   "action": {
     "default_popup": "index.html"
   },
-  "permissions": ["storage", "tabs"],
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; script-src-elem 'self' 'unsafe-inline' https://accounts.google.com/gsi/client;"
-}
+  "permissions": ["storage", "tabs", "notifications","webNavigation","activeTab"],
+  "host_permissions": ["<all_urls>"]
 }

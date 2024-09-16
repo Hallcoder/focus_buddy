@@ -3,16 +3,22 @@ import logo from "../assets/logo.png";
 import CustomInput from "../components/input";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { doc, setDoc } from "firebase/firestore";
+import { useEffect } from "react";
 
 const firebaseErrors: { [key: string]: string } = {
   "auth/email-already-in-use": "This email is already in use.",
   "auth/invalid-email": "The email address is not valid.",
-  "auth/weak-password": "The password is too weak. Please use at least 6 characters.",
+  "auth/weak-password":
+    "The password is too weak. Please use at least 6 characters.",
   "auth/user-not-found": "No user found with this email.",
   "auth/wrong-password": "Incorrect password. Please try again.",
   "auth/too-many-requests": "Too many requests. Please try again later.",
@@ -30,11 +36,18 @@ function Signup() {
 
   const validationSchema = Yup.object({
     username: Yup.string().required("Username is required"),
-    email: Yup.string().email("Invalid email address").required("Email is required"),
-    password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
   });
 
-  const handleSubmit = async (values: any, { setSubmitting, setStatus }: any) => {
+  const handleSubmit = async (
+    values: any,
+    { setSubmitting, setStatus }: any
+  ) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -46,24 +59,30 @@ function Signup() {
         displayName: values.username,
       });
 
-      await setDoc(doc(db,"users", userCredential.user.uid), {
+      await setDoc(doc(db, "users", userCredential.user.uid), {
         email: userCredential.user.email,
         blocked_urls: [],
         moderating: [],
         moderators: [],
-        name:values.username
+        name: values.username,
       });
 
       await sendEmailVerification(userCredential.user);
       console.log("User signed up successfully:", userCredential.user);
       navigate("/login");
     } catch (error: any) {
-      const errorMessage = firebaseErrors[error.code as keyof typeof firebaseErrors] || 'An unexpected error occurred. Please try again.';
+      const errorMessage =
+        firebaseErrors[error.code as keyof typeof firebaseErrors] ||
+        "An unexpected error occurred. Please try again.";
       setStatus(errorMessage);
       console.error("Error signing up:", error.message);
     } finally {
       setSubmitting(false);
     }
+  };
+  const handleGoogleCallbackResponse = (response: any) => {
+    console.log("Google OAuth response:", response);
+    navigate("/home");
   };
 
   return (
@@ -95,7 +114,11 @@ function Signup() {
               value={values.username}
               onChange={handleChange}
             />
-            <ErrorMessage name="username" component="div" className="text-red-500 text-xs" />
+            <ErrorMessage
+              name="username"
+              component="div"
+              className="text-red-500 text-xs"
+            />
 
             <CustomInput
               name="email"
@@ -105,7 +128,11 @@ function Signup() {
               value={values.email}
               onChange={handleChange}
             />
-            <ErrorMessage name="email" component="div" className="text-red-500 text-xs" />
+            <ErrorMessage
+              name="email"
+              component="div"
+              className="text-red-500 text-xs"
+            />
 
             <CustomInput
               name="password"
@@ -115,12 +142,14 @@ function Signup() {
               value={values.password}
               onChange={handleChange}
             />
-            <ErrorMessage name="password" component="div" className="text-red-500 text-xs" />
+            <ErrorMessage
+              name="password"
+              component="div"
+              className="text-red-500 text-xs"
+            />
 
             {/* Display general error message */}
-            {status && (
-              <div className="text-red-500 font-serif">{status}</div>
-            )}
+            {status && <div className="text-red-500 font-serif">{status}</div>}
 
             <button
               type="submit"

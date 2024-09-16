@@ -1,12 +1,14 @@
+import React, { useEffect } from "react";
 import logo from "../assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { auth } from "../config/firebase";
+
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import CustomInput from "../components/input";
-import { GoogleLogin } from "@react-oauth/google";
 import CryptoJS from "crypto-js";
+
 const firebaseErrors: { [key: string]: string } = {
   "auth/invalid-email": "The email address is not valid.",
   "auth/user-disabled": "This user has been disabled.",
@@ -18,6 +20,19 @@ const firebaseErrors: { [key: string]: string } = {
 
 function Login() {
   const navigate = useNavigate();
+
+  // Check if the user is already authenticated on component load
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("User is already logged in:", user);
+        navigate("/home"); // Redirect to home if already authenticated
+      }
+    });
+
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, [navigate]);
 
   const initialValues = {
     email: "",
@@ -32,12 +47,34 @@ function Login() {
       .min(6, "Password must be at least 6 characters")
       .required("Password is required"),
   });
-  const secretKey = 'your-secret-key'; 
 
-  const encryptToken = (token:string) => {
+  const secretKey = 'your-secret-key';
+
+  const encryptToken = (token: string) => {
     return CryptoJS.AES.encrypt(token, secretKey).toString();
   };
-  
+
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Example: Encrypt and store the token securely
+      const token = await user.getIdToken();
+      const encryptedToken = encryptToken(token);
+      chrome.storage.local.set({ authToken: encryptedToken }, () => {
+        console.log('Token is saved.');
+      });
+
+      console.log("User signed in with Google:", user);
+      navigate("/home");
+    } catch (error) {
+      console.error("Error during Google Sign-In:", error);
+    }
+  };
+
   const handleSubmit = async (
     values: any,
     { setSubmitting, setErrors, setStatus }: any
@@ -48,19 +85,12 @@ function Login() {
         values.email,
         values.password
       );
-  
+
       // Check if the email is verified
       if (!userCredential.user.emailVerified) {
         throw new Error("Please verify your email before logging in.");
       }
-  
-      // Store the token securely
-      // const token = await userCredential.user.getIdToken();
-      // const encryptedToken = encryptToken(token);
-      // chrome.storage.local.set({ authToken: encryptedToken }, () => {
-      //   console.log('Token is saved.');
-      // });
-  
+
       console.log("User logged in successfully:", userCredential.user);
       navigate("/home");
     } catch (error: any) {
@@ -80,16 +110,7 @@ function Login() {
     <div className="flex flex-col justify-center items-center">
       <img src={logo} alt="logo" className="h-[10vh] m-2 w-45" />
       <h1 className="font-semibold m-2 p-2 text-3xl">Login</h1>
-      <GoogleLogin
-        onSuccess={(credentialResponse) => {
-          console.log(credentialResponse);
-          navigate("/home");
-        }}
-        onError={() => {
-          console.log("Login Failed");
-        }}
-      />
-      <p className="font-semibold m-2">OR</p>
+
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -137,6 +158,7 @@ function Login() {
           </Form>
         )}
       </Formik>
+
       <p className="m-2">
         Don't have an account?{" "}
         <Link to="/signup" className="font-semibold text-primary underline">

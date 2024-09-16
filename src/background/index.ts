@@ -1,51 +1,57 @@
-// background/index.ts (background script)
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../config/firebase";
 
-import { auth, db } from '../config/firebase';
-import { doc, getDoc } from "firebase/firestore";
+console.log("Background script loaded...");
 
-// Listen for extension startup and installation events to sync blacklist
-chrome.runtime.onStartup.addListener(() => {
-  syncBlacklistWithLocalStorage();
+// Listen for webNavigation events (when a URL is completely loaded)
+chrome.webNavigation.onCompleted.addListener((details) => {
+  if (details.url) {
+    // Notify the content script about the URL change
+    chrome.tabs.sendMessage(details.tabId, { action: "urlChanged", url: details.url });
+  }
+}, { url: [{ hostContains: '.' }] });
+
+// Listen for tab updates (also captures URL changes)
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  console.log("URL visited:",tab.url)
+  if (changeInfo.status === "complete" && tab.url) {
+    // Notify the content script about the URL change
+    chrome.tabs.sendMessage(tabId, { action: "urlChanged", url: tab.url });
+  }
 });
 
 chrome.runtime.onInstalled.addListener(() => {
-  syncBlacklistWithLocalStorage();
+  console.log("Extension installed and background script is running.");
+  chrome.notifications.create({
+    type: "basic",
+    iconUrl: chrome.runtime.getURL("logo192.png"),
+    title: "Test Notification",
+    message: "This is a test notification to check functionality.",
+  });
 });
 
-async function syncBlacklistWithLocalStorage() {
-  // Listen for authentication state changes
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      const userId = user.uid;
-      try {
-        // Get a reference to the user's document in the "users" collection
-        const docRef = doc(db, "users", userId);
-
-        // Fetch the user's document from Firestore
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          // Extract the blocked URLs from the user's document
-          const blockedUrls = docSnap.data().blocked_urls;
-          console.log("APPLICATION LOG:",blockedUrls);
-          // Store the blocked URLs in Chrome's local storage
-          chrome.storage.local.set({ blacklistedUrls: blockedUrls }, () => {
-            console.log('Blocked URLs saved to local storage.');
-          });
-        } else {
-          console.log('No user data found.');
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    } else {
-      console.log('No user is signed in.');
-    }
+// Function to send the logged-in user's ID to content scripts
+function sendUserToContentScripts(user:any) {
+  chrome.tabs.query({}, (tabs) => {
+    tabs.forEach((tab:any) => {
+      chrome.tabs.sendMessage(tab.id, {
+        action: "userLoggedIn",
+        userId: user.uid
+      });
+    });
   });
 }
 
-// Example: Access the blacklist from Chrome's local storage
-chrome.storage.local.get(['blacklistedUrls'], (result) => {
-  console.log('Blocked URLs retrieved from local storage:', result.blacklistedUrls);
-  // Use the blocked URLs in your extension as needed
+// Listen for Firebase authentication state changes
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("User is logged in (background):", user.uid);
+
+    // Send the logged-in user's ID to all content scripts
+    sendUserToContentScripts(user);
+  } else {
+    console.log("No user is logged in (background).");
+  }
 });
+
+export {};

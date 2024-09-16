@@ -1,8 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
+import { getAuth,GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 // Firebase configuration object using environment variables
 const firebaseConfig = {
@@ -19,9 +19,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
-const analytics = getAnalytics(app);
 const auth = getAuth(app);
+auth.useDeviceLanguage();
 const db = getFirestore(app);
+const functions = getFunctions(app);
 const storage = getStorage(app);
-
-export { app, analytics, auth, db, storage };
+const GoogleProvider = new GoogleAuthProvider();
+export { app, auth,functions, db, storage ,GoogleProvider};
