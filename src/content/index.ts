@@ -1,10 +1,12 @@
 // Import Firebase configuration and Firestore-related services
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../config/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "../config/firebase";
 
 // Define variables for blocked sites and their loading status
 let blockedSites: string[] = [];
 let blockedSitesLoaded = false; // Track if blocked URLs have been loaded
+let queuedUrls: { url: string; userId: string }[] = []; // Queue to hold URL checks while waiting for auth
 
 // Use chrome.storage.local to cache blocked URLs
 const BLOCKED_SITES_CACHE_KEY = "blockedSitesCache";
@@ -48,7 +50,7 @@ function extractBaseDomain(url: string): string {
 // Function to check if the base domain of a URL is blocked
 function isBlocked(url: string): boolean {
   const baseDomain = extractBaseDomain(url);
-  console.log("Base Domain:", baseDomain);
+  console.log("Checking if URL is blocked. Base Domain:", baseDomain);
 
   if (!blockedSites || blockedSites.length === 0) {
     console.log("blockedSites array is empty or not populated yet.");
@@ -60,14 +62,14 @@ function isBlocked(url: string): boolean {
     return baseDomain === blockedDomain;
   });
 
-  console.log("Is Blocked:", isBlocked);
+  console.log("Is URL Blocked?", isBlocked);
   return isBlocked;
 }
 
 // Function to fetch moderators' emails from Firestore
-async function fetchModeratorsEmails() {
+async function fetchModeratorsEmails(): Promise<string[]> {
   try {
-    const moderatorsRef = doc(db, "settings", "moderators"); // Example location
+    const moderatorsRef = doc(db, "settings", "moderators"); // Example Firestore path
     const moderatorsSnap = await getDoc(moderatorsRef);
 
     if (moderatorsSnap.exists()) {
@@ -104,60 +106,52 @@ async function fetchUserEmail(userId: string): Promise<string | null> {
 
 // Function to notify moderators
 async function notifyModerator(url: string, userId: string) {
-  console.log("Notifying moderators");
-  const userEmail = await fetchUserEmail(userId);
-  const moderators = await fetchModeratorsEmails();
+  console.log("Notifying moderators...", auth.currentUser);
 
-  if (!userEmail) {
-    console.error("User email not found.");
-    return;
-  }
+  if (auth.currentUser) {
+    const userEmail = await fetchUserEmail(userId);
+    const moderators = await fetchModeratorsEmails();
 
-  if (moderators.length === 0) {
-    console.error("No moderators found.");
-    return;
-  }
+    console.log("Data:", userEmail, moderators);
 
-  // Send the notification using a Node.js server with Nodemailer
-  try {
-    await fetch('http://localhost:3000/mail/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url,
-        userEmail,
-        moderators,
-      }),
-    });
-    console.log("Notification sent to moderators for blocked site:", url);
-  } catch (error) {
-    console.error("Error sending notification:", error);
-  }
-}
-
-// Function to notify user and close the tab
-function notifyAndCloseTab(url: string) {
-  console.log("Closing site...");
-  // Close the current active tab
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    if (tabs.length > 0 && tabs[0]?.id) {
-      chrome.tabs.remove(tabs[0].id, () => {
-        if (chrome.runtime.lastError) {
-          console.error("Error closing tab:", chrome.runtime.lastError.message);
-        } else {
-          console.log("Tab closed successfully");
-        }
-      });
-    } else {
-      console.log("No active tab found to close");
+    if (!userEmail) {
+      console.error("User email not found.");
+      return;
     }
-  });
+
+    if (moderators.length === 0) {
+      console.error("No moderators found.");
+      return;
+    }
+
+    console.log("Sending notification to moderators...");
+
+    // Send the notification using a Node.js server with Nodemailer
+    try {
+      await fetch("http://localhost:3000/mail/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url,
+          userEmail,
+          moderators,
+        }),
+      });
+      console.log("Notification sent to moderators for blocked site:", url);
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  } else {
+    console.log("No user is logged in. Notification not sent.");
+  }
 }
 
 // Check URL against blocked sites from cache and Firestore
 async function checkUrlAgainstBlockedSites(url: string, userId: string) {
+  console.log("Checking URL against blocked sites...");
+
   // Load blocked URLs from cache
   chrome.storage.local.get([BLOCKED_SITES_CACHE_KEY], async (result) => {
     if (result[BLOCKED_SITES_CACHE_KEY]) {
@@ -168,7 +162,6 @@ async function checkUrlAgainstBlockedSites(url: string, userId: string) {
       // Check if the URL is blocked immediately
       if (isBlocked(url)) {
         console.log("Blocked site detected from cache:", url);
-        notifyAndCloseTab(url);
         await notifyModerator(url, userId);
       }
     }
@@ -179,10 +172,22 @@ async function checkUrlAgainstBlockedSites(url: string, userId: string) {
     // Check again if the URL is blocked after Firestore fetch
     if (isBlocked(url)) {
       console.log("Blocked site detected from Firestore:", url);
-      notifyAndCloseTab(url);
       await notifyModerator(url, userId);
     }
   });
+}
+
+// Queue URL checks if auth is not ready
+function queueUrlCheck(url: string, userId: string) {
+  queuedUrls.push({ url, userId });
+}
+
+// Process queued URL checks once user is authenticated
+function processQueuedUrls(userId: string) {
+  for (const queuedUrl of queuedUrls) {
+    checkUrlAgainstBlockedSites(queuedUrl.url, userId);
+  }
+  queuedUrls = []; // Clear the queue after processing
 }
 
 // Listen for messages from the background script
@@ -192,8 +197,14 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     const userId = message.userId; // Ensure user ID is provided in the message
     console.log("URL received:", url);
 
-    // Check against blocked sites both locally and from Firestore
-    await checkUrlAgainstBlockedSites(url, userId);
+    // Queue the URL check if user is not authenticated yet
+    if (!auth.currentUser) {
+      console.log("Auth not ready yet. Queueing URL check.");
+      queueUrlCheck(url, userId);
+    } else {
+      // Check against blocked sites both locally and from Firestore
+      await checkUrlAgainstBlockedSites(url, userId);
+    }
   }
 
   // Handle user login data from background.js
@@ -203,6 +214,19 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
     // Fetch blocked URLs for the authenticated user
     fetchBlockedUrlsForUser(userId);
+  }
+});
+
+// Observe authentication state changes
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    console.log("User signed in:", user);
+    const userId = user.uid;
+
+    // Process any queued URL checks
+    processQueuedUrls(userId);
+  } else {
+    console.log("No user signed in.");
   }
 });
 
