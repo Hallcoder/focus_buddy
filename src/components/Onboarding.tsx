@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 interface OnboardingStep {
   title: string;
@@ -25,8 +26,26 @@ const steps: OnboardingStep[] = [
   }
 ];
 
-function Onboarding({ onComplete }: { onComplete: () => void }) {
+function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0);
+  const navigate = useNavigate();
+
+  const handleNavigation = () => {
+    try {
+      // Save onboarding completion status
+      chrome.storage.sync.set({ onboardingCompleted: true }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to save onboarding status:', chrome.runtime.lastError);
+          return;
+        }
+        navigate('/home');
+      });
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback navigation
+      window.location.href = chrome.runtime.getURL('index.html#/home');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-white z-50">
@@ -64,7 +83,7 @@ function Onboarding({ onComplete }: { onComplete: () => void }) {
               </button>
             ) : (
               <button
-                onClick={onComplete}
+                onClick={handleNavigation}
                 className="px-6 py-2 bg-primary text-white rounded-md"
               >
                 Get Started

@@ -98,7 +98,7 @@ function Home() {
   return (
     <div className="flex flex-col h-full">
       {!hasCompletedOnboarding ? (
-        <Onboarding onComplete={handleOnboardingComplete} />
+        <Onboarding  />
       ) : (
         <>
           <Navbar />

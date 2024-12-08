@@ -55,31 +55,33 @@ function Login() {
   };
 
   const handleGoogleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // Check if this is a new user (metadata.creationTime === metadata.lastSignInTime)
-      const isNewUser = user.metadata.creationTime === user.metadata.lastSignInTime;
-
-      // Example: Encrypt and store the token securely
-      const token = await user.getIdToken();
-      const encryptedToken = encryptToken(token);
-      chrome.storage.local.set({ authToken: encryptedToken }, () => {
-        console.log('Token is saved.');
+      const response = await fetch('http://localhost:3000/auth/google', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
       });
+      console.log(response);
+      if (!response.ok) {
+        throw new Error('Failed to authenticate with Google');
+      }
 
-      if (isNewUser) {
-        // Redirect to setup/onboarding page for new users
-        navigate("/setup", { state: { email: user.email } });
+      const data = await response.json();
+      
+      if (data.isNewUser) {
+        navigate("/onboarding");
       } else {
-        // Existing user, proceed to home
         navigate("/home");
       }
-    } catch (error) {
-      console.error("Error during Google Sign-In:", error);
+
+      return data.user;
+    } catch (error: any) {
+      const errorMessage = firebaseErrors[error.code as keyof typeof firebaseErrors] || 
+                          "An unexpected error occurred. Please try again.";
+      console.error('Authentication error:', errorMessage);
+      throw error;
     }
   };
 

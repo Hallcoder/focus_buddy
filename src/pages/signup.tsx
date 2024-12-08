@@ -7,7 +7,8 @@ import {
   sendEmailVerification,
   updateProfile,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  signInWithCustomToken
 } from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import { Formik, Form, ErrorMessage } from "formik";
@@ -89,26 +90,13 @@ function Signup() {
 
   const handleGoogleSignup = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
-        blocked_urls: [],
-        moderating: [],
-        moderators: [],
-        name: user.displayName || user.email?.split('@')[0],
-      }, { merge: true });
-
-      console.log("Google sign up successful:", user);
-      navigate("/home");
+      // Redirect to backend's Google OAuth endpoint
+      window.location.href = 'http://localhost:3000/auth/google';
     } catch (error: any) {
-      console.error("Error signing up with Google:", error);
-      const errorMessage =
-        firebaseErrors[error.code as keyof typeof firebaseErrors] ||
-        "An error occurred during Google sign-up. Please try again.";
-      alert(errorMessage);
+      const errorMessage = firebaseErrors[error.code as keyof typeof firebaseErrors] || 
+                          "An unexpected error occurred. Please try again.";
+      console.error('Authentication error:', error);
+      throw error;
     }
   };
 
