@@ -2,11 +2,12 @@ import ContinueWithGoogleButton from "../components/GoogleButton";
 import logo from "../assets/logo.png";
 import CustomInput from "../components/input";
 import { Link, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from "firebase/auth";
 import { auth, db } from "../config/firebase";
 import { Formik, Form, ErrorMessage } from "formik";
@@ -23,6 +24,11 @@ const firebaseErrors: { [key: string]: string } = {
   "auth/wrong-password": "Incorrect password. Please try again.",
   "auth/too-many-requests": "Too many requests. Please try again later.",
   "auth/network-request-failed": "Network error. Please check your connection.",
+  "auth/popup-closed-by-user": "Sign-in popup was closed before completing.",
+  "auth/cancelled-popup-request": "The sign-in popup was cancelled.",
+  "auth/popup-blocked": "Sign-in popup was blocked by the browser.",
+  "auth/account-exists-with-different-credential": 
+    "An account already exists with the same email address but different sign-in credentials.",
 };
 
 function Signup() {
@@ -80,24 +86,47 @@ function Signup() {
       setSubmitting(false);
     }
   };
-  const handleGoogleCallbackResponse = (response: any) => {
-    console.log("Google OAuth response:", response);
-    navigate("/home");
+
+  const handleGoogleSignup = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        blocked_urls: [],
+        moderating: [],
+        moderators: [],
+        name: user.displayName || user.email?.split('@')[0],
+      }, { merge: true });
+
+      console.log("Google sign up successful:", user);
+      navigate("/home");
+    } catch (error: any) {
+      console.error("Error signing up with Google:", error);
+      const errorMessage =
+        firebaseErrors[error.code as keyof typeof firebaseErrors] ||
+        "An error occurred during Google sign-up. Please try again.";
+      alert(errorMessage);
+    }
   };
 
   return (
     <div className="flex flex-col justify-center items-center border-4 border-red-400">
       <img src={logo} alt="logo" className="h-[10vh] m-2 w-45" />
       <h1 className="font-semibold m-2 p-2 text-3xl">Signup</h1>
-      <GoogleLogin
-        onSuccess={(credentialResponse) => {
-          console.log(credentialResponse);
-          navigate("/home");
-        }}
-        onError={() => {
-          console.log("Login Failed");
-        }}
-      />
+      <button
+        onClick={handleGoogleSignup}
+        className="flex items-center justify-center gap-2 p-2 border rounded-md hover:bg-gray-50 transition-colors w-8/12"
+      >
+        <img 
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+          alt="Google" 
+          className="w-6 h-6"
+        />
+        Continue with Google
+      </button>
       <p className="font-semibold m-2">OR</p>
       <Formik
         initialValues={initialValues}

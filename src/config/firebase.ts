@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth,GoogleAuthProvider } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
@@ -24,5 +24,14 @@ auth.useDeviceLanguage();
 const db = getFirestore(app);
 const functions = getFunctions(app);
 const storage = getStorage(app);
-const GoogleProvider = new GoogleAuthProvider();
-export { app, auth,functions, db, storage ,GoogleProvider};
+
+const firebaseErrors: { [key: string]: string } = {
+  // ... existing errors ...
+  "auth/popup-closed-by-user": "Sign-in popup was closed before completing.",
+  "auth/cancelled-popup-request": "The sign-in popup was cancelled.",
+  "auth/popup-blocked": "Sign-in popup was blocked by the browser.",
+  "auth/account-exists-with-different-credential": 
+    "An account already exists with the same email address but different sign-in credentials.",
+};
+
+export { app, auth,functions, db, storage };

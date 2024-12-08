@@ -1,233 +1,172 @@
-// Import Firebase configuration and Firestore-related services
-import { doc, getDoc } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../config/firebase";
-
-// Define variables for blocked sites and their loading status
-let blockedSites: string[] = [];
-let blockedSitesLoaded = false; // Track if blocked URLs have been loaded
-let queuedUrls: { url: string; userId: string }[] = []; // Queue to hold URL checks while waiting for auth
-
-// Use chrome.storage.local to cache blocked URLs
-const BLOCKED_SITES_CACHE_KEY = "blockedSitesCache";
-
-// Fetch blocked URLs from Firestore and store them in chrome.storage.local
-async function fetchBlockedUrlsForUser(userId: string) {
-  try {
-    console.log("Fetching blocked URLs from Firestore...");
-    const userDocRef = doc(db, "users", userId);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-      const userData = userDocSnap.data();
-      blockedSites = userData?.blocked_urls || [];
-      blockedSitesLoaded = true;
-      console.log("Fetched blocked URLs from Firestore:", blockedSites);
-
-      // Cache the blocked URLs for faster future access
-      chrome.storage.local.set({ [BLOCKED_SITES_CACHE_KEY]: blockedSites });
-    } else {
-      console.log("No user data found.");
-    }
-  } catch (error) {
-    console.error("Error fetching blocked URLs from Firestore:", error);
-  }
-}
+// Add this at the top of your file
+let isModalShowing = false;
 
 // Utility function to extract the base domain from a URL
 function extractBaseDomain(url: string): string {
   try {
     const urlObj = new URL(url);
     const domain = urlObj.hostname;
-    // Remove "www." prefix if present
-    return domain.startsWith("www.") ? domain.substring(4) : domain;
+    return domain.startsWith("www.") ? domain.substring(4) : domain; // Remove "www."
   } catch (e) {
     console.error("Error parsing URL:", url, e);
     return "";
   }
 }
 
-// Function to check if the base domain of a URL is blocked
-function isBlocked(url: string): boolean {
-  const baseDomain = extractBaseDomain(url);
-  console.log("Checking if URL is blocked. Base Domain:", baseDomain);
-
-  if (!blockedSites || blockedSites.length === 0) {
-    console.log("blockedSites array is empty or not populated yet.");
-    return false;
-  }
-
-  const isBlocked = blockedSites.some((blockedSite) => {
-    const blockedDomain = extractBaseDomain(blockedSite);
-    return baseDomain === blockedDomain;
+// Remove the notifyAndCloseTab function and replace with this:
+function requestTabClose(url: string) {
+  console.log("Requesting tab close");
+  chrome.runtime.sendMessage({
+    action: "closeTab",
+    url: url
   });
-
-  console.log("Is URL Blocked?", isBlocked);
-  return isBlocked;
 }
 
-// Function to fetch moderators' emails from Firestore
-async function fetchModeratorsEmails(): Promise<string[]> {
-  try {
-    const moderatorsRef = doc(db, "settings", "moderators"); // Example Firestore path
-    const moderatorsSnap = await getDoc(moderatorsRef);
-
-    if (moderatorsSnap.exists()) {
-      const moderatorsData = moderatorsSnap.data();
-      return moderatorsData?.emails || [];
-    } else {
-      console.log("No moderators data found.");
-      return [];
-    }
-  } catch (error) {
-    console.error("Error fetching moderators emails:", error);
-    return [];
+// Add this function to create and show a custom modal
+function showBlockedSiteModal(url: string) {
+  if (isModalShowing) {
+    console.log("Modal already showing, skipping...");
+    return;
   }
+  
+  isModalShowing = true;
+  
+  // Create modal container with styles
+  const modal = document.createElement('div');
+  modal.id = 'blocked-site-modal';
+  modal.innerHTML = `
+    <div class="blocked-modal-content">
+      <div class="blocked-modal-header">
+        <h2>⚠️ Site Blocked</h2>
+        <button class="close-button" onclick="this.parentElement.parentElement.parentElement.remove()">×</button>
+      </div>
+      <div class="blocked-modal-body">
+        <p>This website has been blocked according to your settings.</p>
+        <p>You will be redirected in <span id="countdown">3</span> seconds.</p>
+      </div>
+    </div>
+  `;
+
+  // Add styles
+  const styles = document.createElement('style');
+  styles.textContent = `
+    #blocked-site-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .blocked-modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 90%;
+      animation: slideIn 0.3s ease-in-out;
+    }
+
+    .blocked-modal-header {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .blocked-modal-header h2 {
+      margin: 0;
+      color: #e74c3c;
+      font-size: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .blocked-modal-body {
+      color: #333;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .blocked-modal-body p {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+
+    #countdown {
+      font-weight: bold;
+      color: #e74c3c;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  `;
+
+  // Append modal and styles to document
+  document.head.appendChild(styles);
+  document.body.appendChild(modal);
+
+  // Countdown timer
+  let countdown = 3;
+  const countdownElement = modal.querySelector('#countdown');
+  
+  const timer = setInterval(() => {
+    countdown--;
+    if (countdownElement) {
+      countdownElement.textContent = countdown.toString();
+    }
+    if (countdown <= 0) {
+      clearInterval(timer);
+      modal.style.animation = 'fadeOut 0.3s ease-in-out';
+      setTimeout(() => {
+        modal.remove();
+        isModalShowing = false; // Reset the flag
+        requestTabClose(url);
+      }, 300);
+    }
+  }, 1000);
 }
 
-// Function to fetch the user's email from Firestore
-async function fetchUserEmail(userId: string): Promise<string | null> {
-  try {
-    const userDocRef = doc(db, "users", userId);
-    const userDocSnap = await getDoc(userDocRef);
+// Update the message listener to use the modal instead of alert
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Content script received message:", message);
 
-    if (userDocSnap.exists()) {
-      const userData = userDocSnap.data();
-      return userData?.email || null;
-    } else {
-      console.log("No user data found.");
-      return null;
-    }
-  } catch (error) {
-    console.error("Error fetching user email:", error);
-    return null;
+  if (message.action === "siteBlocked") {
+    console.log("Blocked site detected:", message.url);
+    showBlockedSiteModal(message.url);
   }
-}
 
-// Function to notify moderators
-async function notifyModerator(url: string, userId: string) {
-  console.log("Notifying moderators...", auth.currentUser);
-
-  if (auth.currentUser) {
-    const userEmail = await fetchUserEmail(userId);
-    const moderators = await fetchModeratorsEmails();
-
-    console.log("Data:", userEmail, moderators);
-
-    if (!userEmail) {
-      console.error("User email not found.");
-      return;
-    }
-
-    if (moderators.length === 0) {
-      console.error("No moderators found.");
-      return;
-    }
-
-    console.log("Sending notification to moderators...");
-
-    // Send the notification using a Node.js server with Nodemailer
-    try {
-      await fetch("http://localhost:3000/mail/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url,
-          userEmail,
-          moderators,
-        }),
-      });
-      console.log("Notification sent to moderators for blocked site:", url);
-    } catch (error) {
-      console.error("Error sending notification:", error);
-    }
-  } else {
-    console.log("No user is logged in. Notification not sent.");
+  if (message.action === "userLoggedIn") {
+    console.log("User logged in (content.js), userId:", message.userId);
   }
-}
+});
 
-// Check URL against blocked sites from cache and Firestore
-async function checkUrlAgainstBlockedSites(url: string, userId: string) {
-  console.log("Checking URL against blocked sites...");
-
-  // Load blocked URLs from cache
-  chrome.storage.local.get([BLOCKED_SITES_CACHE_KEY], async (result) => {
-    if (result[BLOCKED_SITES_CACHE_KEY]) {
-      blockedSites = result[BLOCKED_SITES_CACHE_KEY];
-      blockedSitesLoaded = true;
-      console.log("Loaded blocked URLs from cache:", blockedSites);
-
-      // Check if the URL is blocked immediately
-      if (isBlocked(url)) {
-        console.log("Blocked site detected from cache:", url);
-        await notifyModerator(url, userId);
+// Update the observer callback to use the modal
+const observer = new MutationObserver(() => {
+  const currentUrl = window.location.href;
+  chrome.runtime.sendMessage(
+    { action: "checkBlockedUrl", url: currentUrl },
+    (response) => {
+      if (response?.isBlocked) {
+        console.log("Blocked site detected:", currentUrl);
+        showBlockedSiteModal(currentUrl);
       }
     }
-
-    // Fetch the latest blocked URLs from Firestore
-    await fetchBlockedUrlsForUser(userId);
-
-    // Check again if the URL is blocked after Firestore fetch
-    if (isBlocked(url)) {
-      console.log("Blocked site detected from Firestore:", url);
-      await notifyModerator(url, userId);
-    }
-  });
-}
-
-// Queue URL checks if auth is not ready
-function queueUrlCheck(url: string, userId: string) {
-  queuedUrls.push({ url, userId });
-}
-
-// Process queued URL checks once user is authenticated
-function processQueuedUrls(userId: string) {
-  for (const queuedUrl of queuedUrls) {
-    checkUrlAgainstBlockedSites(queuedUrl.url, userId);
-  }
-  queuedUrls = []; // Clear the queue after processing
-}
-
-// Listen for messages from the background script
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.action === "urlChanged") {
-    const url = message.url;
-    const userId = message.userId; // Ensure user ID is provided in the message
-    console.log("URL received:", url);
-
-    // Queue the URL check if user is not authenticated yet
-    if (!auth.currentUser) {
-      console.log("Auth not ready yet. Queueing URL check.");
-      queueUrlCheck(url, userId);
-    } else {
-      // Check against blocked sites both locally and from Firestore
-      await checkUrlAgainstBlockedSites(url, userId);
-    }
-  }
-
-  // Handle user login data from background.js
-  if (message.action === "userLoggedIn") {
-    const userId = message.userId;
-    console.log("User logged in (content.js):", userId);
-
-    // Fetch blocked URLs for the authenticated user
-    fetchBlockedUrlsForUser(userId);
-  }
+  );
 });
 
-// Observe authentication state changes
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    console.log("User signed in:", user);
-    const userId = user.uid;
-
-    // Process any queued URL checks
-    processQueuedUrls(userId);
-  } else {
-    console.log("No user signed in.");
-  }
-});
+// Start observing URL changes
+observer.observe(document, { subtree: true, childList: true });
 
 export {};

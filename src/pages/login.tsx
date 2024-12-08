@@ -61,6 +61,9 @@ function Login() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      // Check if this is a new user (metadata.creationTime === metadata.lastSignInTime)
+      const isNewUser = user.metadata.creationTime === user.metadata.lastSignInTime;
+
       // Example: Encrypt and store the token securely
       const token = await user.getIdToken();
       const encryptedToken = encryptToken(token);
@@ -68,8 +71,13 @@ function Login() {
         console.log('Token is saved.');
       });
 
-      console.log("User signed in with Google:", user);
-      navigate("/home");
+      if (isNewUser) {
+        // Redirect to setup/onboarding page for new users
+        navigate("/setup", { state: { email: user.email } });
+      } else {
+        // Existing user, proceed to home
+        navigate("/home");
+      }
     } catch (error) {
       console.error("Error during Google Sign-In:", error);
     }
@@ -110,6 +118,19 @@ function Login() {
     <div className="flex flex-col justify-center items-center">
       <img src={logo} alt="logo" className="h-[10vh] m-2 w-45" />
       <h1 className="font-semibold m-2 p-2 text-3xl">Login</h1>
+
+      <button
+        onClick={handleGoogleSignIn}
+        className="flex items-center justify-center gap-2 p-2 border rounded-md hover:bg-gray-50 transition-colors w-8/12"
+      >
+        <img 
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+          alt="Google" 
+          className="w-6 h-6"
+        />
+        Continue with Google
+      </button>
+      <p className="font-semibold m-2">OR</p>
 
       <Formik
         initialValues={initialValues}
@@ -158,7 +179,9 @@ function Login() {
           </Form>
         )}
       </Formik>
-
+      <p className="m-1">
+        <Link to="/reset-password" className="font-semibold text-primary underline">Forgot Password</Link>
+      </p>
       <p className="m-2">
         Don't have an account?{" "}
         <Link to="/signup" className="font-semibold text-primary underline">

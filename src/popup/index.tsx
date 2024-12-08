@@ -12,6 +12,7 @@ import AddBlackListedUrls from "../pages/add-blacklisted-urls";
 import { Toaster } from "react-hot-toast";
 import AddOrUpdateUrl from "../pages/add-blacklisted-urls";
 import AuthProvider from "../config/authProvider";
+import ResetPassword from "../pages/reset-password";
 console.log("ID", process.env.REACT_APP_GOOGLE_CLIENT_ID);
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -20,11 +21,11 @@ root.render(
   <HashRouter>
     <AuthProvider>
       <Toaster />
-      <GoogleOAuthProvider
+      {/* <GoogleOAuthProvider
         clientId={
           "771820500935-3ppaku63hos7gih0oinj5o11hs2433go.apps.googleusercontent.com"
         }
-      >
+      > */}
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/home" element={<Home />} />
@@ -32,9 +33,10 @@ root.render(
           <Route path="/login" element={<TestPage />} />
           <Route path="/add-chosen-buddies" element={<AddChosenBuddies />} />
           <Route path="/add-blacklisted-urls" element={<AddOrUpdateUrl />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* Add more routes here as needed */}
         </Routes>
-      </GoogleOAuthProvider>
+      {/* </GoogleOAuthProvider> */}
     </AuthProvider>
   </HashRouter>
 );
