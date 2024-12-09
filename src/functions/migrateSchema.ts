@@ -1,8 +1,9 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-interface BuddyConfig {
+export interface BuddyConfig {
   email: string;
+  nickname: string;
   penaltyAmount: number;
   paymentMethod: string;
   paymentDetails: string;
@@ -23,6 +24,7 @@ export const migrateUserSchema = functions.https.onRequest(async (req, res) => {
       data.moderators.forEach((email: string) => {
         buddyConfigs[email] = {
           email,
+          nickname: '',
           penaltyAmount: 1, // default amount
           paymentMethod: 'paypal', // default method
           paymentDetails: '', // empty by default

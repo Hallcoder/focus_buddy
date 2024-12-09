@@ -10,6 +10,7 @@ import { fetchUserByEmail } from "../utils/firebaseFunctions";
 
 interface BuddyFormValues {
   buddyEmail: string;
+  nickname: string;
   penaltyAmount: number;
   paymentMethod: string;
   paymentDetails: string;
@@ -17,6 +18,7 @@ interface BuddyFormValues {
 
 interface BuddyConfig {
   email: string;
+  nickname: string;
   penaltyAmount: number;
   paymentMethod: 'paypal' | 'venmo' | 'cashapp';
   paymentDetails: string;
@@ -59,6 +61,7 @@ function AddChosenBuddies() {
         // Create buddy configuration
         const buddyConfig: BuddyConfig = {
           email: buddyEmail,
+          nickname: values.nickname,
           penaltyAmount: values.penaltyAmount,
           paymentMethod: values.paymentMethod as 'paypal' | 'venmo' | 'cashapp',
           paymentDetails: values.paymentDetails,
@@ -99,6 +102,10 @@ function AddChosenBuddies() {
     buddyEmail: Yup.string()
       .email("Invalid email address")
       .required("Email is required"),
+    nickname: Yup.string()
+      .required("Nickname is required")
+      .min(2, "Nickname must be at least 2 characters")
+      .max(20, "Nickname must be less than 20 characters"),
     penaltyAmount: Yup.number()
       .min(1, "Minimum penalty amount is $1")
       .required("Penalty amount is required"),
@@ -159,6 +166,7 @@ function AddChosenBuddies() {
       <Formik
         initialValues={{ 
           buddyEmail: "",
+          nickname: "",
           penaltyAmount: 1,
           paymentMethod: "paypal",
           paymentDetails: ""
@@ -174,6 +182,14 @@ function AddChosenBuddies() {
               type="email"
               onChange={handleChange}
               placeholder="Enter buddy's email"
+            />
+
+            <CustomInput
+              name="nickname"
+              label="Buddy's Nickname"
+              type="text"
+              onChange={handleChange}
+              placeholder="Enter a nickname for your buddy"
             />
 
             <div>

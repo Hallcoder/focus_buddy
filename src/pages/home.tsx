@@ -11,16 +11,19 @@ import { extractURLComponents } from "../utils/commonFunctions";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { FaRegSadTear } from "react-icons/fa";
-import { fetchBuddiesByEmail } from "../utils/firebaseFunctions";
 import { AuthContext } from "../config/authProvider";
 import Onboarding from "../components/Onboarding";
+import BuddyDetailsModal from '../components/BuddyDetailsModal';
+import { sendNotificationToBuddy } from '../utils/notificationFunctions';
+import { BuddyConfig } from "../functions/migrateSchema";
 
 function Home() {
   const { hasCompletedOnboarding, setHasCompletedOnboarding } = useContext(AuthContext);
   const [blockedurls, setBlockedUrls] = useState<string[]>([]);
-  const [chosenBuddies, setChosenBuddies] = useState<any[]>([]);
+  const [buddyConfigs, setBuddyConfigs] = useState<Record<string, any>>({});
   const [loadingUrls, setLoadingUrls] = useState(true);
   const [loadingBuddies, setLoadingBuddies] = useState(true);
+  const [selectedBuddy, setSelectedBuddy] = useState<BuddyConfig | null>(null);
   const navigate = useNavigate();
   useEffect(() => {
     const fetchBlockedUrls = async () => {
@@ -51,7 +54,7 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchChosenBuddies = async () => {
+    const fetchBuddyConfigs = async () => {
       const user = auth.currentUser;
 
       if (!user) {
@@ -64,22 +67,18 @@ function Home() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const moderators = data.moderators || [];
-
-          // Fetch buddies by email
-          const buddies = await fetchBuddiesByEmail(moderators);
-          setChosenBuddies(buddies);
+          setBuddyConfigs(data.buddyConfigs || {});
         } else {
           console.log("No such document!");
         }
       } catch (error: any) {
-        console.error("Error fetching chosen buddies:", error.message);
+        console.error("Error fetching buddy configs:", error.message);
       } finally {
         setLoadingBuddies(false);
       }
     };
 
-    fetchChosenBuddies();
+    fetchBuddyConfigs();
   }, []);
   const handleEditUrl = (existingUrl: string) => {
     navigate("/add-blacklisted-urls", {
@@ -95,6 +94,64 @@ function Home() {
       setHasCompletedOnboarding(true);
     }
   };
+  const handleViewDetails = (buddyConfig: BuddyConfig) => {
+    const completeConfig: BuddyConfig = {
+      email: buddyConfig.email,
+      nickname: buddyConfig.nickname || '',
+      penaltyAmount: buddyConfig.penaltyAmount,
+      paymentMethod: buddyConfig.paymentMethod,
+      paymentDetails: buddyConfig.paymentDetails,
+      addedAt: buddyConfig.addedAt
+    };
+    setSelectedBuddy(completeConfig);
+  };
+
+  const handleUpdateBuddy = async (updatedConfig: BuddyConfig) => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.error("No authenticated user found.");
+      return;
+    }
+
+    const userDocRef = doc(db, "users", user.uid);
+    try {
+      await updateDoc(userDocRef, {
+        [`buddyConfigs.${updatedConfig.email}`]: updatedConfig
+      });
+      setBuddyConfigs((prevConfigs) => ({
+        ...prevConfigs,
+        [updatedConfig.email]: updatedConfig
+      }));
+      sendNotificationToBuddy(updatedConfig.email, "Your buddy details have been updated.");
+    } catch (error) {
+      console.error("Error updating buddy details:", error);
+    }
+  };
+
+  const handleRemoveBuddy = async (email: string) => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.error("No authenticated user found.");
+      return;
+    }
+
+    const userDocRef = doc(db, "users", user.uid);
+    try {
+      // Remove the buddy from the buddyConfigs
+      const updatedBuddyConfigs = { ...buddyConfigs };
+      delete updatedBuddyConfigs[email];
+
+      await updateDoc(userDocRef, {
+        buddyConfigs: updatedBuddyConfigs
+      });
+
+      setBuddyConfigs(updatedBuddyConfigs);
+      sendNotificationToBuddy(email, "You have been removed as a buddy.");
+    } catch (error) {
+      console.error("Error removing buddy:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {!hasCompletedOnboarding ? (
@@ -127,19 +184,17 @@ function Home() {
             <Tab label="Chosen Buddies">
               {loadingBuddies ? (
                 <Skeleton count={5} height={60} />
-              ) : chosenBuddies.length > 0 ? (
-                chosenBuddies.map((buddy: any) => (
+              ) : Object.entries(buddyConfigs).length > 0 ? (
+                Object.entries(buddyConfigs).map(([email, config]: [string, any]) => (
                   <ListingComponent
-                    key={buddy.id}
-                    title={buddy.name}
+                    key={email}
                     type="buddy"
-                    subTitle={buddy.email}
-                    onEdit={() => console.log("Edit action triggered!")}
-                    onRemove={() => console.log("Remove action triggered!")}
-                    onViewDetails={() => console.log("View Buddy Details")}
-                    onSendNotification={() =>
-                      console.log("Send Notification to Buddy")
-                    }
+                    title={config.nickname || email}
+                    subTitle={`${email} - Penalty: $${config.penaltyAmount} - Payment: ${config.paymentMethod}`}
+                    onEdit={() => handleViewDetails({...config, email})}
+                    onRemove={() => handleRemoveBuddy(email)}
+                    onViewDetails={() => handleViewDetails({...config, email})}
+                    onSendNotification={() => sendNotificationToBuddy(email, "Notification sent to buddy.")}
                   />
                 ))
               ) : (
@@ -150,6 +205,13 @@ function Home() {
               )}
             </Tab>
           </Tabs>
+          {selectedBuddy && (
+            <BuddyDetailsModal
+              buddyConfig={selectedBuddy}
+              onClose={() => setSelectedBuddy(null)}
+              onUpdate={handleUpdateBuddy}
+            />
+          )}
         </>
       )}
     </div>

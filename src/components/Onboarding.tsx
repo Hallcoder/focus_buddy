@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { doc, updateDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { app, db } from '../config/firebase';
 
 interface OnboardingStep {
   title: string;
@@ -29,21 +32,24 @@ const steps: OnboardingStep[] = [
 function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
-
-  const handleNavigation = () => {
+  const auth = getAuth(app);
+  const handleNavigation = async () => {
     try {
-      // Save onboarding completion status
-      chrome.storage.sync.set({ onboardingCompleted: true }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('Failed to save onboarding status:', chrome.runtime.lastError);
-          return;
-        }
-        navigate('/home');
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        console.error('No user found');
+        return;
+      }
+
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        hasCompletedOnboarding: true
       });
+
+      navigate('/home');
+      window.location.reload();
     } catch (error) {
-      console.error('Navigation error:', error);
-      // Fallback navigation
-      window.location.href = chrome.runtime.getURL('index.html#/home');
+      console.error('Error updating onboarding status:', error);
     }
   };
 
@@ -57,14 +63,14 @@ function Onboarding() {
           exit={{ opacity: 0, x: -20 }}
           className="h-full flex flex-col items-center justify-center p-4"
         >
-          <img 
-            src={steps[currentStep].illustration} 
+          <img
+            src={steps[currentStep].illustration}
             alt={steps[currentStep].title}
             className="w-64 h-64 mb-8"
           />
           <h2 className="text-2xl font-bold mb-4">{steps[currentStep].title}</h2>
           <p className="text-gray-600 mb-8 text-center">{steps[currentStep].description}</p>
-          
+
           <div className="flex gap-4">
             {currentStep > 0 && (
               <button

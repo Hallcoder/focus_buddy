@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { SlOptionsVertical } from "react-icons/sl";
 
 interface ListingComponentProps {
@@ -21,11 +21,26 @@ function ListingComponent({
   onSendNotification
 }: ListingComponentProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Toggle the visibility of the popout menu
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
+
+  // Close the menu if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Conditional menu options based on type
   const renderMenuOptions = () => {
@@ -104,7 +119,7 @@ function ListingComponent({
       </span>
 
       {/* Icon for the three dots */}
-      <span className="relative">
+      <span className="relative" ref={menuRef}>
         <button
           className="focus:outline-none hover:bg-gray-200 p-1 rounded-full"
           onClick={toggleMenu}
