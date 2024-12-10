@@ -8,6 +8,8 @@ import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import CustomInput from "../components/input";
 import CryptoJS from "crypto-js";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../config/firebase";
 
 const firebaseErrors: { [key: string]: string } = {
   "auth/invalid-email": "The email address is not valid.",
@@ -56,27 +58,39 @@ function Login() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const response = await fetch('http://localhost:3000/auth/google', {
+      // Get the Google Auth Provider token
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+
+      // Send the token to your backend
+      const response = await fetch('http://localhost:3000/auth/google/token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ idToken }),
         credentials: 'include'
       });
-      console.log(response);
+
       if (!response.ok) {
-        throw new Error('Failed to authenticate with Google');
+        throw new Error('Failed to authenticate with backend');
       }
 
       const data = await response.json();
       
-      if (data.isNewUser) {
+      // Check if user exists in your database
+      const userDocRef = doc(db, 'users', result.user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (!userDoc.exists()) {
+        // New user - redirect to onboarding
         navigate("/onboarding");
       } else {
+        // Existing user - redirect to home
         navigate("/home");
       }
 
-      return data.user;
     } catch (error: any) {
       const errorMessage = firebaseErrors[error.code as keyof typeof firebaseErrors] || 
                           "An unexpected error occurred. Please try again.";
