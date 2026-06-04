@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing - FocusBuddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #30ad8e;
+      --primary-dark: #009b7d;
+      --primary-light: #e6f7f3;
+      --primary-glow: rgba(48, 173, 142, 0.15);
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --bg-soft: #f8faf9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); line-height: 1.6; }
+    a { text-decoration: none; }
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+    header .wrap { max-width: 1100px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 22px; font-weight: 800; color: var(--primary-dark); letter-spacing: -0.5px; }
+    .logo span { color: var(--text); }
+    nav { display: flex; align-items: center; gap: 28px; }
+    nav a { color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: var(--primary-dark); }
+    nav .install-btn { background: var(--primary); color: #fff; padding: 8px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: background 0.2s; }
+    nav .install-btn:hover { background: var(--primary-dark); }
+
+    .pricing { padding: 120px 24px 60px; max-width: 800px; margin: 0 auto; text-align: center; }
+    .section-label { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--primary-dark); background: var(--primary-light); padding: 4px 12px; border-radius: 4px; margin-bottom: 12px; }
+    .pricing h1 { font-size: 42px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 8px; }
+    .pricing .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 48px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .plan { padding: 36px; border-radius: 16px; border: 2px solid #f1f5f9; position: relative; transition: all 0.3s; }
+    .plan:hover { border-color: #b2e0d4; }
+    .plan.pop { border-color: var(--primary); background: linear-gradient(180deg, var(--bg-soft) 0%, #fff 100%); }
+    .plan.pop::before { content: 'Most Popular'; position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 4px 18px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+    .plan-name { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .plan-price { font-size: 44px; font-weight: 900; letter-spacing: -2px; margin-bottom: 2px; }
+    .plan-period { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+    .plan ul { list-style: none; margin-bottom: 28px; }
+    .plan ul li { padding: 8px 0; font-size: 14px; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 10px; }
+    .plan ul li::before { content: ''; display: inline-block; width: 18px; height: 18px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2330ad8e' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E") no-repeat center; background-size: contain; flex-shrink: 0; margin-top: 1px; }
+    .plan-btn { display: block; text-align: center; padding: 13px; border-radius: 10px; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+    .plan-btn.primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(48,173,142,0.25); }
+    .plan-btn.primary:hover { background: var(--primary-dark); }
+    .plan-btn.ghost { background: #f1f5f9; color: #334155; }
+    .plan-btn.ghost:hover { background: #e2e8f0; }
+
+    .compare { max-width: 700px; margin: 60px auto 0; text-align: left; }
+    .compare h2 { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 24px; letter-spacing: -0.5px; }
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-table th, .compare-table td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
+    .compare-table th { text-align: left; font-weight: 600; color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .compare-table td { color: var(--text-secondary); }
+    .compare-table td:nth-child(2), .compare-table td:nth-child(3) { text-align: center; }
+    .compare-table th:nth-child(2), .compare-table th:nth-child(3) { text-align: center; }
+    .check { color: var(--primary); font-weight: 700; }
+    .cross { color: #cbd5e1; }
+
+    .faq { max-width: 600px; margin: 60px auto 40px; padding: 0 24px; }
+    .faq h2 { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 28px; letter-spacing: -0.5px; }
+    .faq-item { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-item h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .faq-item p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    footer { padding: 40px 24px; background: #0f172a; text-align: center; }
+    footer .links a { color: var(--text-muted); font-size: 13px; margin: 0 14px; }
+    footer .links a:hover { color: #e2e8f0; }
+    footer .copy { font-size: 12px; color: var(--text-secondary); margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a href="/" class="logo">Focus<span>Buddy</span></a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/pricing">Pricing</a>
+        <a href="https://chrome.google.com/webstore" class="install-btn" target="_blank">Install Free</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="pricing">
+    <span class="section-label">Pricing</span>
+    <h1>Simple, transparent pricing</h1>
+    <p class="subtitle">Start free. Upgrade when you need more power.</p>
+    <div class="grid">
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-period">forever</div>
+        <ul>
+          <li>Block up to 3 websites</li>
+          <li>1 accountability buddy</li>
+          <li>Email notifications</li>
+          <li>Uninstall detection</li>
+          <li>Motivational blocked page</li>
+        </ul>
+        <a href="https://chrome.google.com/webstore" class="plan-btn ghost" target="_blank">Get Started Free</a>
+      </div>
+      <div class="plan pop">
+        <div class="plan-name">Premium</div>
+        <div class="plan-price">$5</div>
+        <div class="plan-period">per month</div>
+        <ul>
+          <li>Unlimited website blocking</li>
+          <li>Up to 3 accountability buddies</li>
+          <li>Category blocking</li>
+          <li>Incognito mode detection</li>
+          <li>Monitoring dashboard</li>
+          <li>Full violation history</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="https://chrome.google.com/webstore" class="plan-btn primary" target="_blank">Start Premium</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="compare">
+    <h2>Feature comparison</h2>
+    <table class="compare-table">
+      <thead>
+        <tr><th>Feature</th><th>Free</th><th>Premium</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Website blocking</td><td>Up to 3</td><td>Unlimited</td></tr>
+        <tr><td>Accountability buddies</td><td>1</td><td>Up to 3</td></tr>
+        <tr><td>Email notifications</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Uninstall detection</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Category blocking</td><td class="cross">&#10005;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Incognito detection</td><td class="cross">&#10005;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Monitoring dashboard</td><td class="cross">&#10005;</td><td class="check">&#10003;</td></tr>
+        <tr><td>Violation history</td><td>Last 5</td><td>Full history</td></tr>
+        <tr><td>Priority support</td><td class="cross">&#10005;</td><td class="check">&#10003;</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="faq">
+    <h2>Frequently asked questions</h2>
+    <div class="faq-item">
+      <h3>Can I cancel anytime?</h3>
+      <p>Yes. Cancel your Premium subscription at any time. You keep Premium features until the end of your billing period.</p>
+    </div>
+    <div class="faq-item">
+      <h3>What payment methods do you accept?</h3>
+      <p>We accept credit/debit cards and PayPal through our payment partner Gumroad.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Is my payment information secure?</h3>
+      <p>Yes. All payments are processed by Gumroad, a PCI-compliant merchant of record. We never see or store your card details.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Do I need Premium to use the extension?</h3>
+      <p>No. The free plan is fully functional with website blocking, one buddy, and email notifications.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can I get a refund?</h3>
+      <p>Yes. We offer a full refund within 3 days of your initial purchase. See our <a href="/refund" style="color:var(--primary-dark);font-weight:600;">refund policy</a>.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="/terms">Terms of Service</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/refund">Refund Policy</a>
+    </div>
+    <p class="copy">FocusBuddy &copy; 2025. All rights reserved.</p>
+  </footer>
+</body>
+</html>

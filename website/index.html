@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusBuddy - Overcome Temptation. Regain Control.</title>
+  <meta name="description" content="FocusBuddy pairs you with real accountability partners who get notified when you slip. Block distracting sites and stay focused — together.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #30ad8e;
+      --primary-dark: #009b7d;
+      --primary-light: #e6f7f3;
+      --primary-glow: rgba(48, 173, 142, 0.15);
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --bg-soft: #f8faf9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text); line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; }
+
+    header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+    header .wrap { max-width: 1100px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-size: 22px; font-weight: 800; color: var(--primary-dark); letter-spacing: -0.5px; }
+    .logo span { color: var(--text); }
+    nav { display: flex; align-items: center; gap: 28px; }
+    nav a { color: var(--text-secondary); font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: var(--primary-dark); }
+    nav .install-btn { background: var(--primary); color: #fff; padding: 8px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; transition: background 0.2s; }
+    nav .install-btn:hover { background: var(--primary-dark); }
+
+    /* Hero */
+    .hero { padding: 140px 24px 80px; text-align: center; position: relative; background: linear-gradient(180deg, var(--bg-soft) 0%, #fff 100%); }
+    .hero::before { content: ''; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 700px; height: 700px; background: radial-gradient(circle, var(--primary-glow) 0%, transparent 65%); pointer-events: none; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--primary-light); border: 1px solid #b2e0d4; color: var(--primary-dark); padding: 6px 16px; border-radius: 100px; font-size: 13px; font-weight: 600; margin-bottom: 24px; }
+    .hero-badge .dot { width: 7px; height: 7px; background: var(--primary); border-radius: 50%; }
+    .hero h1 { font-size: 52px; font-weight: 900; letter-spacing: -2px; line-height: 1.1; margin-bottom: 20px; max-width: 720px; margin-left: auto; margin-right: auto; }
+    .hero h1 .accent { color: var(--primary-dark); }
+    .hero p { font-size: 18px; color: var(--text-secondary); max-width: 540px; margin: 0 auto 36px; line-height: 1.7; }
+    .hero-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #fff; padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px; transition: all 0.2s; box-shadow: 0 4px 14px rgba(48, 173, 142, 0.3); }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(48, 173, 142, 0.35); }
+    .btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--text); padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 15px; border: 1px solid var(--border); transition: all 0.2s; }
+    .btn-secondary:hover { border-color: #cbd5e1; background: #f8faf9; }
+    .hero-proof { margin-top: 56px; padding-top: 40px; border-top: 1px solid #f1f5f9; color: var(--text-muted); font-size: 14px; font-weight: 500; }
+    .hero-proof .highlight { background: linear-gradient(180deg, transparent 55%, rgba(48, 173, 142, 0.2) 55%); color: var(--text); font-weight: 700; padding: 0 2px; }
+
+    /* How */
+    .how { padding: 80px 24px; background: #fff; }
+    .how .wrap { max-width: 1100px; margin: 0 auto; }
+    .section-label { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--primary-dark); background: var(--primary-light); padding: 4px 12px; border-radius: 4px; margin-bottom: 12px; }
+    .how h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .how .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 48px; max-width: 480px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    @media (max-width: 768px) { .steps { grid-template-columns: 1fr; } }
+    .step { background: var(--bg-soft); border: 1px solid #eef2f0; border-radius: 16px; padding: 32px; transition: all 0.3s; }
+    .step:hover { border-color: #c5e8de; background: #f4fbf9; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.04); }
+    .step-num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--primary); color: #fff; border-radius: 10px; font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Features */
+    .features { padding: 80px 24px; background: linear-gradient(180deg, #f8faf9 0%, #fff 100%); }
+    .features .wrap { max-width: 1100px; margin: 0 auto; }
+    .features h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .features .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 48px; max-width: 480px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 768px) { .feature-grid { grid-template-columns: 1fr; } }
+    .feature-card { background: #fff; border: 1px solid #eef2f0; border-radius: 14px; padding: 28px; transition: all 0.3s; }
+    .feature-card:hover { border-color: #c5e8de; box-shadow: 0 8px 24px rgba(0,0,0,0.04); transform: translateY(-2px); }
+    .feature-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 14px; }
+    .feature-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Anti-cheat */
+    .anticheat { padding: 80px 24px; background: linear-gradient(180deg, #fff 0%, var(--bg-soft) 100%); }
+    .anticheat .wrap { max-width: 900px; margin: 0 auto; }
+    .anticheat h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .anticheat .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 48px; max-width: 520px; }
+    .cheat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .cheat-grid { grid-template-columns: 1fr; } }
+    .cheat-item { display: flex; gap: 14px; align-items: flex-start; padding: 20px; background: #fff; border: 1px solid #eef2f0; border-radius: 12px; transition: all 0.3s; }
+    .cheat-item:hover { border-color: #c5e8de; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .cheat-icon { width: 36px; height: 36px; border-radius: 8px; background: #fef2f2; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .cheat-item h3 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .cheat-item p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* Coming Soon */
+    .coming { padding: 80px 24px; background: #fff; }
+    .coming .wrap { max-width: 900px; margin: 0 auto; text-align: center; }
+    .coming h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .coming .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 48px; max-width: 520px; margin-left: auto; margin-right: auto; }
+    .coming-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
+    @media (max-width: 600px) { .coming-grid { grid-template-columns: 1fr; } }
+    .coming-card { background: var(--bg-soft); border: 2px dashed #c5e8de; border-radius: 16px; padding: 32px; position: relative; }
+    .coming-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary-dark); background: var(--primary-light); padding: 3px 10px; border-radius: 4px; margin-bottom: 12px; }
+    .coming-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .coming-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Pricing */
+    .pricing { padding: 80px 24px; background: #fff; }
+    .pricing .wrap { max-width: 800px; margin: 0 auto; text-align: center; }
+    .pricing h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+    .pricing .subtitle { color: var(--text-secondary); font-size: 16px; margin-bottom: 48px; }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
+    @media (max-width: 600px) { .pricing-grid { grid-template-columns: 1fr; } }
+    .plan { padding: 36px; border-radius: 16px; border: 2px solid #eef2f0; position: relative; transition: all 0.3s; }
+    .plan:hover { border-color: #c5e8de; }
+    .plan.pop { border-color: var(--primary); background: linear-gradient(180deg, #f4fbf9 0%, #fff 100%); }
+    .plan.pop::before { content: 'Most Popular'; position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 4px 18px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+    .plan-name { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .plan-price { font-size: 44px; font-weight: 900; letter-spacing: -2px; margin-bottom: 2px; }
+    .plan-period { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+    .plan ul { list-style: none; margin-bottom: 28px; }
+    .plan ul li { padding: 8px 0; font-size: 14px; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 10px; }
+    .plan ul li::before { content: ''; display: inline-block; width: 18px; height: 18px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2330ad8e' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E") no-repeat center; background-size: contain; flex-shrink: 0; margin-top: 1px; }
+    .plan-btn { display: block; text-align: center; padding: 13px; border-radius: 10px; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+    .plan-btn.primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(48,173,142,0.25); }
+    .plan-btn.primary:hover { background: var(--primary-dark); }
+    .plan-btn.ghost { background: #f1f5f3; color: #334155; }
+    .plan-btn.ghost:hover { background: #e2e8e5; }
+
+    /* CTA */
+    .cta-section { padding: 80px 24px; text-align: center; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+    .cta-section h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .cta-section p { font-size: 16px; opacity: 0.9; margin-bottom: 32px; max-width: 460px; margin-left: auto; margin-right: auto; }
+    .btn-white { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: var(--primary-dark); padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 15px; transition: all 0.2s; }
+    .btn-white:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+
+    footer { padding: 40px 24px; background: #0f172a; text-align: center; }
+    footer .links { margin-bottom: 16px; }
+    footer .links a { color: #94a3b8; font-size: 13px; margin: 0 14px; transition: color 0.2s; }
+    footer .links a:hover { color: #e2e8f0; }
+    footer .copy { font-size: 12px; color: #475569; }
+
+    /* Social proof toast */
+    .proof-toast { position: fixed; top: 90px; left: 24px; z-index: 200; background: #fff; border: 1px solid #eef2f0; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04); transform: translateX(-120%); opacity: 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-width: 340px; }
+    .proof-toast.show { transform: translateX(0); opacity: 1; }
+    .proof-toast .proof-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .proof-toast .proof-text { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+    .proof-toast .proof-text strong { color: var(--text); font-weight: 600; }
+    .proof-toast .proof-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .proof-toast .proof-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px; }
+    .proof-toast .proof-close:hover { color: var(--text-secondary); }
+    @media (max-width: 480px) { .proof-toast { left: 12px; right: 12px; max-width: none; top: 72px; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="wrap">
+      <a href="/" class="logo">Focus<span>Buddy</span></a>
+      <nav>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#anticheat">Anti-Cheat</a>
+        <a href="/pricing">Pricing</a>
+        <a href="https://chrome.google.com/webstore" class="install-btn" target="_blank">Install Free</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-badge"><span class="dot"></span> Free Chrome Extension</div>
+    <h1>You won't cheat if someone<br>you respect <span class="accent">finds out.</span></h1>
+    <p>FocusBuddy pairs you with real accountability partners who get emailed the moment you slip. Block distracting sites, add a buddy, and take back control — together.</p>
+    <div class="hero-actions">
+      <a href="https://chrome.google.com/webstore" class="btn-primary" target="_blank">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        Add to Chrome — Free
+      </a>
+      <a href="#how" class="btn-secondary">See how it works</a>
+    </div>
+    <p class="hero-proof">Your buddy gets emailed when you visit a blocked site. <span class="highlight">No way to cheat.</span></p>
+  </section>
+
+  <section class="how" id="how">
+    <div class="wrap">
+      <span class="section-label">How It Works</span>
+      <h2>Accountability in 3 steps</h2>
+      <p class="subtitle">You bring the goal. Your buddy brings the pressure.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Block your weak spots</h3>
+          <p>Add the sites that waste your time — social media, news, whatever your vice is. FocusBuddy blocks them instantly.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Add a real person</h3>
+          <p>Invite a friend, partner, mentor, or anyone you respect. They become your accountability buddy via email — no account needed for them.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Slip? They know.</h3>
+          <p>Visit a blocked site and your buddy gets an email immediately. Try to uninstall? They know that too. There's no easy way out.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="wrap">
+      <span class="section-label">Features</span>
+      <h2>Every loophole, closed</h2>
+      <p class="subtitle">We thought of all the ways you'd try to cheat. Then we blocked them.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fef2f2;">&#128683;</div>
+          <h3>Website Blocking</h3>
+          <p>Block specific URLs or entire categories like adult content, gambling, and social media.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:var(--primary-light);">&#129309;</div>
+          <h3>Real Accountability</h3>
+          <p>Your buddy isn't an app — it's a real person who gets emailed the second you slip up.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#eff6ff;">&#128274;</div>
+          <h3>Uninstall Detection</h3>
+          <p>Remove the extension and your buddy is immediately notified. No silent escape.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#faf5ff;">&#128373;</div>
+          <h3>Incognito Monitoring</h3>
+          <p>Revoke incognito access? Your buddy finds out. Another loophole sealed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fff7ed;">&#128202;</div>
+          <h3>Buddy Dashboard</h3>
+          <p>Your buddy can see your status, categories, and whether the extension is active — all at a glance.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#f0fdfa;">&#128218;</div>
+          <h3>Violation History</h3>
+          <p>A full log of every blocked site you tried to visit. No hiding, no excuses. Full transparency.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="anticheat" id="anticheat">
+    <div class="wrap">
+      <span class="section-label">Anti-Cheat</span>
+      <h2>We detect everything</h2>
+      <p class="subtitle">We built FocusBuddy for people who actually want to change — and sealed every loophole for the moments you don't.</p>
+      <div class="cheat-grid">
+        <div class="cheat-item">
+          <div class="cheat-icon">&#128274;</div>
+          <div>
+            <h3>Browser-level blocking</h3>
+            <p>Sites are blocked at Chrome's network layer before the page even starts loading. No flash of content, no race condition to exploit.</p>
+          </div>
+        </div>
+        <div class="cheat-item">
+          <div class="cheat-icon">&#128465;</div>
+          <div>
+            <h3>Uninstall the extension</h3>
+            <p>Your buddy gets an email the moment you remove FocusBuddy. There's no silent exit.</p>
+          </div>
+        </div>
+        <div class="cheat-item">
+          <div class="cheat-icon">&#128373;</div>
+          <div>
+            <h3>Disable incognito access</h3>
+            <p>Revoke incognito permission? Detected and reported to your buddy immediately.</p>
+          </div>
+        </div>
+        <div class="cheat-item">
+          <div class="cheat-icon">&#128260;</div>
+          <div>
+            <h3>Tamper with the blocklist</h3>
+            <p>Try to clear your blocked sites locally? We detect it within minutes, restore the list from our server, and alert your buddy.</p>
+          </div>
+        </div>
+        <div class="cheat-item">
+          <div class="cheat-icon">&#128338;</div>
+          <div>
+            <h3>Go offline or disable the extension</h3>
+            <p>We send a heartbeat every 5 minutes. If it stops, your buddy knows something's wrong.</p>
+          </div>
+        </div>
+        <div class="cheat-item">
+          <div class="cheat-icon">&#128203;</div>
+          <div>
+            <h3>Full violation log</h3>
+            <p>Every blocked site you attempt to visit is recorded with a timestamp. Your buddy can see the full history — no hiding, no excuses.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="coming">
+    <div class="wrap">
+      <span class="section-label">Coming Soon</span>
+      <h2>Raise the stakes</h2>
+      <p class="subtitle">Accountability works best when there's something real on the line. These features are on the way.</p>
+      <div class="coming-grid">
+        <div class="coming-card">
+          <span class="coming-badge">Coming Soon</span>
+          <h3>Donate to Charity on Every Slip</h3>
+          <p>Set a dollar amount that gets donated to a charity of your choice every time you violate your own rules. Turn your bad habits into something good.</p>
+        </div>
+        <div class="coming-card">
+          <span class="coming-badge">Coming Soon</span>
+          <h3>Pay Your Buddy</h3>
+          <p>Agree on a penalty with your accountability partner. Every time you slip, they get paid. Nothing motivates like your wallet being on the line.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <span class="section-label">Pricing</span>
+      <h2>Start free, upgrade when ready</h2>
+      <p class="subtitle">No credit card required. No trial period. Just results.</p>
+      <div class="pricing-grid">
+        <div class="plan">
+          <div class="plan-name">Free</div>
+          <div class="plan-price">$0</div>
+          <div class="plan-period">forever</div>
+          <ul>
+            <li>Block up to 3 websites</li>
+            <li>1 accountability buddy</li>
+            <li>Email notifications</li>
+            <li>Uninstall detection</li>
+            <li>Motivational blocked page</li>
+          </ul>
+          <a href="https://chrome.google.com/webstore" class="plan-btn ghost" target="_blank">Get Started Free</a>
+        </div>
+        <div class="plan pop">
+          <div class="plan-name">Premium</div>
+          <div class="plan-price">$5</div>
+          <div class="plan-period">per month &middot; or $50/year (save $10)</div>
+          <ul>
+            <li>Unlimited website blocking</li>
+            <li>Up to 3 accountability buddies</li>
+            <li>Category blocking</li>
+            <li>Incognito mode detection</li>
+            <li>Buddy monitoring dashboard</li>
+            <li>Full violation history</li>
+            <li>Priority support</li>
+          </ul>
+          <a href="https://chrome.google.com/webstore" class="plan-btn primary" target="_blank">Start Premium</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2>Ready to get serious?</h2>
+    <p>Stop relying on willpower alone. Add someone who'll hold you to it.</p>
+    <a href="https://chrome.google.com/webstore" class="btn-white" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Install FocusBuddy
+    </a>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="/terms">Terms of Service</a>
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/refund">Refund Policy</a>
+      <a href="/pricing">Pricing</a>
+    </div>
+    <p class="copy">FocusBuddy &copy; 2025. All rights reserved.</p>
+  </footer>
+
+  <div class="proof-toast" id="proofToast">
+    <div class="proof-icon" id="proofIcon"></div>
+    <div>
+      <div class="proof-text" id="proofText"></div>
+      <div class="proof-time" id="proofTime"></div>
+    </div>
+    <button class="proof-close" onclick="dismissToast()">&times;</button>
+  </div>
+
+  <script>
+    (function() {
+      var hardcoded = [
+        { name: "Alex", location: "New York", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Priya", location: "London", action: "just signed up", icon: "\u2728" },
+        { name: "Marcus", location: "Toronto", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Fatima", location: "Dubai", action: "just signed up", icon: "\u2728" },
+        { name: "James", location: "Sydney", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Sofia", location: "Berlin", action: "just signed up", icon: "\u2728" },
+        { name: "Daniel", location: "Amsterdam", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Amara", location: "Lagos", action: "just signed up", icon: "\u2728" },
+        { name: "Ryan", location: "Chicago", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Leila", location: "Paris", action: "just signed up", icon: "\u2728" },
+        { name: "Chen", location: "Singapore", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Olivia", location: "Melbourne", action: "just signed up", icon: "\u2728" },
+        { name: "Kevin", location: "Seoul", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Sarah", location: "Cape Town", action: "just signed up", icon: "\u2728" },
+        { name: "Raj", location: "Mumbai", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Emma", location: "Stockholm", action: "just signed up", icon: "\u2728" },
+        { name: "Luis", location: "Mexico City", action: "just joined FocusBuddy", icon: "\uD83C\uDF89" },
+        { name: "Yuki", location: "Tokyo", action: "just signed up", icon: "\u2728" }
+      ];
+
+      var realActions = [
+        { action: "just signed up", icon: "\u2728" },
+        { action: "just joined FocusBuddy", icon: "\uD83C\uDF89" }
+      ];
+      var fakeTimeAgo = ["just now", "2 minutes ago", "5 minutes ago", "8 minutes ago", "12 minutes ago", "15 minutes ago", "20 minutes ago"];
+      var toast = document.getElementById("proofToast");
+      var textEl = document.getElementById("proofText");
+      var timeEl = document.getElementById("proofTime");
+      var iconEl = document.getElementById("proofIcon");
+      var index = 0;
+      var dismissed = false;
+      var timer;
+
+      // Start with shuffled hardcoded, then merge real data when it arrives
+      var notifications = hardcoded.slice().sort(function() { return Math.random() - 0.5; });
+
+      // Fetch real signups and prepend them
+      fetch("/api/recent-signups")
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.signups && data.signups.length > 0) {
+            var real = data.signups.map(function(s) {
+              var a = realActions[Math.floor(Math.random() * realActions.length)];
+              return { name: s.name, location: s.country, action: a.action, icon: a.icon, createdAt: s.createdAt };
+            });
+            // Real ones first, then shuffled hardcoded
+            notifications = real.concat(hardcoded.slice().sort(function() { return Math.random() - 0.5; }));
+            index = 0;
+          }
+        })
+        .catch(function() { /* silently use hardcoded */ });
+
+      function computeTimeAgo(createdAt) {
+        if (!createdAt) return fakeTimeAgo[Math.floor(Math.random() * fakeTimeAgo.length)];
+        var diff = Date.now() - new Date(createdAt).getTime();
+        var mins = Math.floor(diff / 60000);
+        if (mins < 1) return "just now";
+        if (mins < 60) return mins + " minutes ago";
+        var hours = Math.floor(mins / 60);
+        if (hours < 24) return hours + (hours === 1 ? " hour ago" : " hours ago");
+        var days = Math.floor(hours / 24);
+        return days + (days === 1 ? " day ago" : " days ago");
+      }
+
+      function showToast() {
+        if (dismissed) return;
+        var n = notifications[index % notifications.length];
+        var t = n.createdAt ? computeTimeAgo(n.createdAt) : fakeTimeAgo[Math.floor(Math.random() * fakeTimeAgo.length)];
+        iconEl.textContent = n.icon;
+        textEl.innerHTML = "<strong>" + n.name + "</strong> from " + n.location + " " + n.action;
+        timeEl.textContent = t;
+        toast.classList.add("show");
+        index++;
+
+        setTimeout(function() {
+          toast.classList.remove("show");
+          timer = setTimeout(showToast, (Math.random() * 5000) + 4000);
+        }, 4000);
+      }
+
+      window.dismissToast = function() {
+        dismissed = true;
+        toast.classList.remove("show");
+        clearTimeout(timer);
+      };
+
+      setTimeout(showToast, 3000);
+    })();
+  </script>
+
+</body>
+</html>
